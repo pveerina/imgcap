@@ -86,3 +86,7 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+
+# Ignore CNN Codes
+*.feats

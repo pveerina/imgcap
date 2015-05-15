@@ -13,6 +13,7 @@ parser.add_argument('--model_def',
                     help='path to model definition prototxt')
 parser.add_argument('--model',
                     help='path to model parameters')
+parser.add_argument('--image_path', help='the path prefix for the list of images')
 parser.add_argument('--files',
                     help='path to a file contsining a list of images')
 parser.add_argument('--gpu',
@@ -35,9 +36,8 @@ def predict(in_data, net):
     Inputs:
     in_data: data batch
     """
-
     out = net.forward(**{net.inputs[0]: in_data})
-    features = out[net.outputs[0]].squeeze(axis=(2,3))
+    features = out[net.outputs[0]]
     return features
 
 
@@ -98,17 +98,14 @@ if args.gpu:
 else:
     caffe.set_mode_cpu()
 
-net = caffe.Net(args.model_def, args.model)
-caffe.set_phase_test()
+net = caffe.Net(args.model_def, args.model, caffe.TEST)
+#caffe.set_phase_test()
 
 filenames = []
 with open(args.files) as fp:
     for line in fp:
         filename = line.strip().split()[0]
-        filenames.append(filename)
+        filenames.append(args.image_path + filename)
 
 allftrs = batch_predict(filenames, net)
-
-# store the features in a pickle file
-with open(args.out, 'w') as fp:
-    pickle.dump(allftrs, fp)
+allftrs.tofile(args.out+".feats")
