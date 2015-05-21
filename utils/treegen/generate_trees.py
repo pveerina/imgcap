@@ -9,7 +9,9 @@
 # are also maintained in a continuous file.
 #
 #
-# currently generates ALL trees
+# currently generates ALL trees for dependency and constituency
+#
+# note that the RAW tree files use a double \n\n as a separator
 import os
 import cPickle
 from nltk.parse import stanford
@@ -21,9 +23,12 @@ import json
 # You will need to customize this
 PARSER_LOC = '/Users/ndufour/stanford-parser/stanford-parser.jar'
 MODEL_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models.jar'
-PCFG_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
-
-root = os.path.dirname(os.path.abspath(__file__))
+CONST_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
+DEP_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/parser/nndep/english_SD.gz'
+try:
+    root = os.path.dirname(os.path.abspath(__file__))
+except:
+    root = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/utils/treegen'
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
@@ -61,11 +66,20 @@ def seen_ids():
 mapping = get_map()
 seen = seen_ids()
 
-def init_parser():
+def init_parser(parseType='C'):
     # initializes the parser
+    #
+    # parseType == 'C' is a constituency tree (via stanford PCFG)
+    # parseType == 'D' is a dependency tree (english_SD)
     os.environ['STANFORD_PARSER'] = PARSER_LOC
     os.environ['STANFORD_MODELS'] = MODEL_LOC
-    parser = stanford.StanfordParser(model_path=PCFG_LOC)
+    if parseType == 'C':
+        parser = stanford.StanfordParser(model_path=CONST_LOC)
+    elif parseType == 'D':
+        parser = stanford.StanfordParser(model_path=CONST_LOC)
+    else:
+        print 'Unrecognized parser type request'
+        return
     return parser
 
 def gk(item):
@@ -77,21 +91,27 @@ def gk(item):
             mapf.write('%s\t%i\n'%(v,k))
     return mapping[item]
 
-def worker(qIN, qOUT, workerN, nWorkers):
+def worker(qIN, qOUTC, qOUTD, workerN, nWorkers):
     # queue worker; instantiates its own stanford parse, then dequeues
     # sentences from qIN, parses them, adds them to qOUT.
     # format of each qIN item:
     # <id> <sentence> <num> <tot_num>
-    parser = init_parser()
+    parser_c = init_parser('C')
+    parser_d = init_parser('D')
     for n,qr in enumerate(qIN):
         if (n%nWorkers)==workerN:
             cids, descs = qr
             print 'Worker %i starting parse chunk %i/%i...'%(workerN, n, len(qIN))
-            parse = parser.raw_parse_sents(descs)
-            print 'Worker %i parse chunk %i/%i complete...'%(workerN, n, len(qIN))
+            parse = parser_c.raw_parse_sents(descs)
+            print 'Worker %i constituency parse chunk %i/%i complete...'%(workerN, n, len(qIN))
             nparse = [y.next() for y in parse]
             for cid, parse in zip(cids, nparse):
-                qOUT.put([cid, str(parse)])
+                qOUTC.put([cid, str(parse)])
+            parse = parser_d.raw_parse_sents(descs)
+            print 'Worker %i dependency parse chunk %i/%i complete...'%(workerN, n, len(qIN))
+            nparse = [y.next() for y in parse]
+            for cid, parse in zip(cids, nparse):
+                qOUTD.put([cid, str(parse)])
 
 def get_str(tree):
     if type(tree)==unicode or type(tree)==str:
@@ -106,15 +126,17 @@ def printTime(seconds):
     return "%dh:%02dm:%02ds" % (h, m, s)
 
 qIN = []
-qOUT = Queue()
-n_procs = 5
+qOUTC = Queue()
+qOUTD = Queue()
+n_procs = 4
 cids = seen_ids()
 print 'Enqueuing sentences'
 tot = 0
-chunk_size = 50
+chunk_size = 2000
 cur_chunk_desc = []
 cur_chunk_id = []
 
+# EXTRACT MS COCO DATA
 filename1 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_train2014.json'
 filename2 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_val2014.json'
 
@@ -126,6 +148,7 @@ f+= json.loads(f1)['annotations']
 
 for n,line in enumerate(f):
     cid, descr = [str(line['image_id']), line['caption'].decode('utf-8')]
+    cid = 'mscoc_' + cid
     if cid in cids:
         print 'Already seen %s'%(cid)
         continue
@@ -138,12 +161,14 @@ for n,line in enumerate(f):
     tot += 1
 qIN.append([cur_chunk_id, cur_chunk_desc])
 
+# EXTRACT FLICKR DATA
 filename = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/flickr_30k_v20130124.token'
 f = open(filename, 'r').read().split('\n')
 for n,line in enumerate(f):
     if not len(line):
         continue
     cid, descr = line.decode('utf-8').split('\t')
+    cid = 'flickr_' + cid.split('#')[0]
     if cid in cids:
         print 'Already seen %s'%(cid)
         continue
@@ -160,22 +185,29 @@ p = []
 if __name__=='__main__':
     print 'starting'
     for i in range(n_procs):
-        p.append(Process(target=worker, args=(qIN, qOUT, i, n_procs)))
+        p.append(Process(target=worker, args=(qIN, qOUTC, qOUTD, i, n_procs)))
     for pr in p:
         pr.start()
-        time.sleep(0.5)
+        time.sleep(1)
     curcnt = 0
     start = time.time()
-    with open(os.path.join(root, 'trees'),'a') as treefile:
-        while curcnt != tot or not qOUT.empty():
+    with open(os.path.join(root, 'trees_const'),'a') as tree_const, open(os.path.join(root, 'trees_const_raw'), 'a') as tree_const_raw, open(os.path.join(root, 'trees_dep'),'a') as tree_dep, open(os.path.join(root, 'trees_dep_raw'), 'a') as tree_dep_raw:
+        while curcnt != tot or not qOUTC.empty() or not qOUTD.empty():
             curcnt += 1
-            cid, parse = qOUT.get()
+            cid, parse = qOUTC.get()
+            tree_const_raw.write('%s\t%s\n'%(cid, parse.replace('\n','')))
+            parse = Tree.fromstring(parse)
+            treestr = get_str(parse)
+            remtime = printTime((tot-(curcnt+1))*(time.time()-start)/(curcnt+1))
+            tree_const.write('%s\t%s\n'%(cid, treestr))
+            cid, parse = qOUTD.get()
+            tree_dep_raw.write('%s\t%s\n'%(cid, parse.replace('\n','')))
             parse = Tree.fromstring(parse)
             treestr = get_str(parse)
             remtime = printTime((tot-(curcnt+1))*(time.time()-start)/(curcnt+1))
             if not curcnt % (chunk_size*n_procs):
                 print '(%i / %i) [rem: %s] %s %s'%(curcnt, tot, remtime, cid, treestr)
-            treefile.write('%s\t%s\n'%(cid, treestr))
+            tree_dep.write('%s\t%s\n'%(cid, treestr))
     for pr in p:
         pr.join()
     print 'All are joined'
