@@ -21,10 +21,15 @@ import time
 import json
 
 # You will need to customize this
-PARSER_LOC = '/Users/ndufour/stanford-parser/stanford-parser.jar'
-MODEL_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models.jar'
-CONST_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
-DEP_LOC = '/Users/ndufour/stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/parser/nndep/english_SD.gz'
+if os.path.isdir('/afs/.ir.stanford.edu/users/n/d/ndufour'):
+    pfx = '/afs/.ir.stanford.edu/users/n/d/ndufour/'
+else:
+    pfx = '/Users/ndufour/'
+PARSER_LOC = pfx + 'stanford-parser/stanford-parser.jar'
+MODEL_LOC = pfx + 'stanford-parser/stanford-parser-3.5.2-models.jar'
+CONST_LOC = pfx + 'stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
+DEP_LOC = pfx + 'stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/parser/nndep/english_SD.gz'
+
 try:
     root = os.path.dirname(os.path.abspath(__file__))
 except:
@@ -128,7 +133,7 @@ def printTime(seconds):
 qIN = []
 qOUTC = Queue()
 qOUTD = Queue()
-n_procs = 4
+n_procs = 10
 cids = seen_ids()
 print 'Enqueuing sentences'
 tot = 0
@@ -137,8 +142,12 @@ cur_chunk_desc = []
 cur_chunk_id = []
 
 # EXTRACT MS COCO DATA
-filename1 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_train2014.json'
-filename2 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_val2014.json'
+if os.path.isdir('/afs/.ir.stanford.edu/users/n/d/ndufour'):
+    filename1 = '/afs/.ir.stanford.edu/users/n/d/ndufour/imgcap/data/mscoco/captions_train2014.json'
+    filename2 = '/afs/.ir.stanford.edu/users/n/d/ndufour/imgcap/data/mscoco/captions_val2014.json'
+else:
+    filename1 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_train2014.json'
+    filename2 = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/mscoco/captions_val2014.json'
 
 f = []
 f1 = open(filename1, 'r').read()
@@ -162,7 +171,10 @@ for n,line in enumerate(f):
 qIN.append([cur_chunk_id, cur_chunk_desc])
 
 # EXTRACT FLICKR DATA
-filename = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/flickr_30k_v20130124.token'
+if os.path.isdir('/afs/.ir.stanford.edu/users/n/d/ndufour'):
+    filename = '/afs/.ir.stanford.edu/users/n/d/ndufour/imgcap/data/flickr_30k_v20130124.token'
+else:
+    filename = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap/data/flickr_30k_v20130124.token'
 f = open(filename, 'r').read().split('\n')
 for n,line in enumerate(f):
     if not len(line):
