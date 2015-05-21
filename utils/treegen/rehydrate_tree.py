@@ -44,6 +44,16 @@ class treeStruct():
                         cstr = cstr[:-1] + ' '
                     rPrettyPrint(c, cstr)
         rPrettyPrint(self.root, '')
+    def toString(self):
+        def rts(node, cstr):
+            if node.isLeaf:
+                cstr += ' ' + node.word
+                return cstr
+            else:
+                for c in node.children:
+                    cstr += rts(c, cstr)
+                return cstr
+        return rts(self.root, '').strip()
 
 class node():
     def __init__(self, parent, rep, mapping):
