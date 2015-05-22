@@ -30,7 +30,8 @@ class treeGet():
 class treeStruct():
     def __init__(self, rep, mapping):
         rep = eval(strRep.replace('(','[').replace(')',']').replace(' ',','))
-        self.root = node(None, rep, mapping)
+        self.nodes = []
+        self.root = node(None, rep, mapping, self)
     def prettyPrint(self):
         def rPrettyPrint(node, cstr):
             if node.isLeaf:
@@ -56,8 +57,9 @@ class treeStruct():
         return rts(self.root, '').strip()
 
 class node():
-    def __init__(self, parent, rep, mapping):
+    def __init__(self, parent, rep, mapping, tree):
         self.parent = parent
+        tree.nodes.append(self)
         if type(rep) == int:
             self.isLeaf = True
             self.ident = rep
@@ -71,8 +73,4 @@ class node():
             self.word = None
             self.children = []
             for i in rep:
-                self.children.append(node(self, i, mapping))
-
-strRep = '(0 ((1 2) 3 (4 5 6)) 7)'
-tg = treeGet()
-k = tg.get(strRep)
+                self.children.append(node(self, i, mapping, tree))
