@@ -15,13 +15,17 @@ class Siamese:
 		self.params = []
 		self.grads = []
 		self.biases = []
+		self.biasGrads = []
 
 		self.imageLayer = 0.1*np.random.randn(self.sharedDim, self.imageDim)
 		self.imageBias = np.zeros((self.imageDim))
 		self.imageGrad = np.zeros((self.sharedDim, self.imageDim))
+		self.imageBiasGrad = np.zeros((self.imageDim))
+		
 		self.sentenceLayer = 0.1*np.random.randn(self.sharedDim, self.sentenceDim)
 		self.sentenceBias = np.zeros((self.sentenceDim))
 		self.sentenceGrad = np.zeros((self.sharedDim, self.sentenceDim))
+		self.sentenceBiasGrad = np.zeros((self.sentenceDim))
 
 		for l in xrange(numLayers):
 			self.params.append(0.1*np.random.randn(self.sharedDim, self.sharedDim))
@@ -30,7 +34,6 @@ class Siamese:
 
 
 	def costAndGrad(self, mbdata, test=False):
-
 		cost = 0.0
 		image_activations = []
 		sentence_activations = []
@@ -86,7 +89,47 @@ class Siamese:
 
 	def backwardProp(self, cost, image_activations, sentence_activations):
 		# backpropogate, storing gradients
-		pass
+		image_deltas = [0.0]
+		sent_deltas = [0.0]
+
+		num_layers = len(self.params)
+		num_layers += 1
+
+		image_input_grad = 0
+		sentence_input_grad = 0
+		# go backwards in layers and then the last l
+		idx = reversed(range(num_layers))
+
+		grads = []
+		bias_grads = []
+
+		for i in idx:
+			image_delta = image_deltas[num_layers - i] * (image_activations[i] > 0)
+			sent_delta = sent_deltas[num_layers - i] * (sentence_activations[i] > 0)
+
+			if i == 1:
+				self.imageGrad = image_delta.dot(image_activations[i-1])
+				self.imageBiasGrad = image_delta
+				image_input_grad = self.imageLayer.T.dot(image_delta)
+				
+				self.sentenceGrad = sent_delta.dot(sentence_activation[i-1])
+				self.sentenceBiasGrad = sent_delta
+				image_input_grad = self.imageLayer.T.dot(sent_delta)
+				break
+			else:
+				dwi = image_delta.dot(image_activations[i-1])
+				dbi = image_delta
+				image_deltas.append(self.params[i].T.dot(image_delta))
+
+				dws = sent_delta.dot(sentence_activations[i-1])
+				dbs = sent_delta
+				sent_deltas.append(self.params[i].T.dot(sent_delta))
+
+				grads.append(dwi+dws)
+				bias_grads.append(dbi+dbs)
+		self.grads = reverse(grads)
+		self.biasGrads = reverse(bias_grads)
+		return image_input_grad, sentence_input_grad
 
 	def updateParams(self, scale, update):
 		#update params
