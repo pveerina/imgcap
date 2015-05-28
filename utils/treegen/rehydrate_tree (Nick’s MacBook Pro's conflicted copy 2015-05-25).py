@@ -47,12 +47,11 @@ class treeStruct():
     def toString(self):
         def rts(node, cstr):
             if node.isLeaf:
-                cstr += ' ' + node.word
-                return cstr
-            else:
-                for c in node.children:
-                    cstr += rts(c, cstr)
-                return cstr
+                return ' ' + node.word
+            cstr = ''
+            for c in node.children:
+                cstr += rts(c, cstr)
+            return cstr
         return rts(self.root, '').strip()
 
 class node():
