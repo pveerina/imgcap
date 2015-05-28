@@ -66,19 +66,21 @@ def batch_predict(filenames, net):
 
         batch_images = np.zeros((Nb, 3, H, W))
         for j,fname in enumerate(batch_filenames):
-            im = imread(fname)
-            if len(im.shape) == 2:
-                im = np.tile(im[:,:,np.newaxis], (1,1,3))
-            # RGB -> BGR
-            im = im[:,:,(2,1,0)]
-            # mean subtraction
-            im = im - np.array([103.939, 116.779, 123.68])
-            # resize
-            im = imresize(im, (H, W))
-            # get channel in correct dimension
-            im = np.transpose(im, (2, 0, 1))
-            batch_images[j,:,:,:] = im
-
+            try:
+                im = imread(fname)
+                if len(im.shape) == 2:
+                    im = np.tile(im[:,:,np.newaxis], (1,1,3))
+                # RGB -> BGR
+                im = im[:,:,(2,1,0)]
+                # mean subtraction
+                im = im - np.array([103.939, 116.779, 123.68])
+                # resize
+                im = imresize(im, (H, W))
+                # get channel in correct dimension
+                im = np.transpose(im, (2, 0, 1))
+                batch_images[j,:,:,:] = im
+            except:
+                print "err", sys.exc_info()[0], fname
         # insert into correct place
         in_data[0:len(batch_range), :, :, :] = batch_images
 
@@ -108,4 +110,5 @@ with open(args.files) as fp:
         filenames.append(args.image_path + filename)
 
 allftrs = batch_predict(filenames, net)
-allftrs.tofile(args.out+".feats")
+np.save(args.out+"_feats",allftrs)
+
