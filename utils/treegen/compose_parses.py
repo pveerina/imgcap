@@ -15,9 +15,9 @@ for n,(parsefl,idfl) in enumerate(zip(parsefls, idfls)):
     ids = open(idfl, 'r').read().strip().split('\n')
     if len(sents) != len(ids):
         print 'ERROR!'
-    for cid,s in enumerate(zip(ids,sents)):
+    for cid,s in zip(ids,sents):
         tree = []
-        parse = s[1].getchildren()[1]
+        parse = s[1].getchildren()
         for pz in parse:
             tuple1 = (pz[0].text, int(pz[0].attrib['idx']))
             tuple2 = (pz[1].text, int(pz[1].attrib['idx']))
