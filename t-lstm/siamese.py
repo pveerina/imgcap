@@ -31,20 +31,32 @@ class Siamese:
 			self.params.append(0.1*np.random.randn(self.sharedDim, self.sharedDim))
 			self.biases.append(np.zeros((self.sharedDim)))
 			self.grads.append((np.zeros(self.sharedDim, self.sharedDim)))
-
-
+	
+	def clearGradients(self):
+		self.grads = []
+		self.biasGrads = []
+		self.imageGrad = np.zeros((self.sharedDim, self.imageDim))
+		self.imageBiasGrad = np.zeros((self.imageDim))
+		self.sentenceGrad = np.zeros((self.sharedDim, self.sentenceDim))
+		self.sentenceBiasGrad = np.zeros((self.sentenceDim))
+		for l in xrange(numLayers):
+			self.params.append(0.1*np.random.randn(self.sharedDim, self.sharedDim))
+			self.biases.append(np.zeros((self.sharedDim)))
+			self.grads.append((np.zeros(self.sharedDim, self.sharedDim)))
+	
 	def costAndGrad(self, mbdata, test=False):
 		cost = 0.0
-		image_activations = []
-		sentence_activations = []
+		batch_image_activations = []
+		batch_sentence_activations = []
 		labels = Counter()
+		self.clearGradients()
 
 		correct_pair_cost = 0.0
 		for imageVec, sentenceVec, label in enumerate(mbdata):
-			image_activation = self.forwardPropImage(imageVec)
-			sentence_activation = self.forwardPropSentence(sentenceVec)
-			image_activations.append(image_activation)
-			sentence_activations.append(sentence_activation)
+			image_activations = self.forwardPropImage(imageVec)
+			sentence_activations = self.forwardPropSentence(sentenceVec)
+			batch_image_activations.append(image_activations)
+			batch_sentence_activations.append(sentence_activations)
 
 			correct_pair_cost += image_activation.dot(sentence_activation)
 
@@ -60,9 +72,9 @@ class Siamese:
 		cost = max(0, 1 - correct_pair_cost + image_mismatch_cost) + 
 		max(0, 1 - correct_pair_cost + sent_mismatch_cost)
 
-		self.backwardProp(self, cost, image_activations, sentence_activations)
-		
-
+		img_input_grad, sentence_input_grad = self.backwardProp(self, cost, image_activations, sentence_activations)
+		grads = {"grads": self.grads, "biasGrads": self.biasGrads, "imageLayerGrad": self.imageGrad, "imageLayerBiasGrad":self.imageBiasGrad, "sentenceLayerGrad": self.sentenceGrad, "sentenceLayerBiasGrad":self.sentenceBiasGrad}
+		return cost, img_input_grad, sentence_input_grad, grads
 
 
 	def forwardPropImage(self, imageVec):
@@ -83,7 +95,6 @@ class Siamese:
 		for i, W in enumerate(self.params):
 			h = np.maximum(W.dot(sentence_activations[i-1]) + self.biases[i], 0)
 			sentence_activations.append(h)
-
 
 		return sentence_activations
 
@@ -108,13 +119,13 @@ class Siamese:
 			sent_delta = sent_deltas[num_layers - i] * (sentence_activations[i] > 0)
 
 			if i == 1:
-				self.imageGrad = image_delta.dot(image_activations[i-1])
-				self.imageBiasGrad = image_delta
+				self.imageGrad += image_delta.dot(image_activations[i-1])
+				self.imageBiasGrad += image_delta
 				image_input_grad = self.imageLayer.T.dot(image_delta)
 				
-				self.sentenceGrad = sent_delta.dot(sentence_activation[i-1])
-				self.sentenceBiasGrad = sent_delta
-				image_input_grad = self.imageLayer.T.dot(sent_delta)
+				self.sentenceGrad += sent_delta.dot(sentence_activation[i-1])
+				self.sentenceBiasGrad += sent_delta
+				sentence_input_grad = self.sentenceLayer.T.dot(sent_delta)
 				break
 			else:
 				dwi = image_delta.dot(image_activations[i-1])
@@ -132,6 +143,14 @@ class Siamese:
 		return image_input_grad, sentence_input_grad
 
 	def updateParams(self, scale, update):
-		#update params
-		pass
 
+		for i in xrange(len(self.params)):
+			self.params[i] += scale * update["grads"][i]
+			self.biases[i] += scale * update["biasGrads"][i]
+
+		self.imageLayer += scale * update["imageLayerGrad"]
+		self.imageBias += scale * update["imageLayerBiasGrad"]
+
+		self.sentenceLayer += scale * update["sentenceLayerGrad"]
+		self.sentenceBias += scale * update["sentenceLayerBiasGrad"]
+		
