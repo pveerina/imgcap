@@ -69,12 +69,17 @@ class Siamese:
 					image_mismatch_cost += image_activations[i].dot(sentence_activations[j])
 					sent_mismatch_cost += image_activations[j].dot(sentence_activations[i])
 
-		cost = max(0, 1 - correct_pair_cost + image_mismatch_cost) + 
-		max(0, 1 - correct_pair_cost + sent_mismatch_cost)
+		cost = max(0, 1 - correct_pair_cost + image_mismatch_cost) + max(0, 1 - correct_pair_cost + sent_mismatch_cost)
+		
+		img_input_grads = []
+		sentence_input_grads = []
+		for image_activations, sentence_activations in zip(batch_image_activations, batch_sentence_activations):
+			img_input_grad, sentence_input_grad = self.backwardProp(self, cost, image_activations, sentence_activations)
+			img_input_grads.append(image_input_grad)
+			sentence_input_grads.append(sentence_input_grad)
 
-		img_input_grad, sentence_input_grad = self.backwardProp(self, cost, image_activations, sentence_activations)
 		grads = {"grads": self.grads, "biasGrads": self.biasGrads, "imageLayerGrad": self.imageGrad, "imageLayerBiasGrad":self.imageBiasGrad, "sentenceLayerGrad": self.sentenceGrad, "sentenceLayerBiasGrad":self.sentenceBiasGrad}
-		return cost, img_input_grad, sentence_input_grad, grads
+		return cost, img_input_grads, sentence_input_grads, grads
 
 
 	def forwardPropImage(self, imageVec):
