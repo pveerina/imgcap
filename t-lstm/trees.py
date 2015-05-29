@@ -19,7 +19,10 @@ class Node: # a node in the tree
         self.r = None
 
 class Tree:
-    def __init__(self, tree):
+    def __init__(self, tree, img=None, num=None):
+        # img = the image label
+        # num = number of this caption
+        #
         # recieves the tree as a list of tuples.
         # such that tree[i] = ith dependency tuple
         # the dependency tuple is:
@@ -49,6 +52,10 @@ class Tree:
                 # it's a left child
                 nodes[ci].idx = len(nodes[pi].right)
                 nodes[pi].right.append(nodes[ci])
+        # recall that left children are added in reverse order, so iterate
+        # over the nodes and reverse all their right children
+        for node in nodes.values():
+            node.left = node.left[::-1]
         self.root = nodes[tree[0][-1]]
-
-
+        self.img = img
+        self.num = num
