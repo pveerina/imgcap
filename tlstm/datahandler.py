@@ -171,10 +171,3 @@ class DataHandler():
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)
 
 
-k = 0
-dh = DataHandler()
-while k != None:
-    k = dh.nextBatch()
-
-
-
