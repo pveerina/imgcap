@@ -1,0 +1,141 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\title{T-LSTM Forward and Back Propagation}
+\begin{document}
+\maketitle
+
+\section{Assumption}
+\begin{enumerate}
+	\item Parse tree is binary with ordered nodes
+	\item Only leaf nodes have words
+	\item Cross-entropy loss function
+\end{enumerate}
+
+\section{Forward Propagation}
+\subsection{Non-Leaf Nodes}
+\begin{equation}
+	\hat{y} = \text{softmax}(W^{(s)}h+b^{(s)})
+\end{equation}
+\begin{equation}
+	h = o \odot \tanh(c)
+\end{equation}
+\begin{equation}
+	c = i \odot u + f_l \odot c_l + f_r \odot c_r
+\end{equation}
+\begin{equation}
+	f_l = a_l(U^{(l)}h_l+V^{(l)}h_r+b^{(f)})
+\end{equation}
+\begin{equation}
+	f_r = a_r(U^{(r)}h_l+V^{(r)}h_r+b^{(f)})
+\end{equation}
+\begin{equation}
+	u = a_u(U^{(u)}h_l+V^{(u)}h_r+b^{(u)})
+\end{equation}
+\begin{equation}
+	o = a_o(U^{(o)}h_l+V^{(o)}h_r+b^{(o)})
+\end{equation}
+\begin{equation}
+	i = a_i(U^{(i)}h_l+V^{(i)}h_r+b^{(i)})
+\end{equation}
+where $a_j$'s are the activation functions.
+
+\subsection{Leaf Nodes}
+\begin{equation}
+	\hat{y} = \text{softmax}(W^{(s)}h+b^{(s)})
+\end{equation}
+\begin{equation}
+	h = o \odot \tanh(c)
+\end{equation}
+\begin{equation}
+	c = i \odot u
+\end{equation}
+\begin{equation}
+	u = a_u(W^{(u)}x+b^{(u)})
+\end{equation}
+\begin{equation}
+	o = a_o(W^{(o)}x+b^{(o)})
+\end{equation}
+\begin{equation}
+	i = a_i(W^{(i)}x+b^{(i)})
+\end{equation}
+
+\section{Back Propagation}
+\subsection{Error Flows}
+There are a total of 6 error outlets from each parent to each of its children.
+$h_{\text{child}} \rightarrow o$, $h_{\text{child}} \rightarrow i$, $h_{\text{child}} \rightarrow u$, $h_{\text{child}} \rightarrow f_l$, $h_{\text{child}} \rightarrow f_r$, $c_{\text{child}} \rightarrow c$.
+\begin{description}
+	\item [Total Error at $h$]: let the total error at $h$ be denoted by $e_h$.
+\end{description}
+\begin{equation}
+	e_h = \frac{\partial J}{\partial h} + \delta_o U^{(o)} + \delta_i U^{(i)} + \delta_u U^{(u)} + \delta_l U^{(l)} + \delta_r U^{(r)}
+\end{equation}
+where $\delta_j$'s are the input errors from parent node. \\
+\textbf{Note}: In the above equation, it is assumed that the node under consideration is a left child of its parent. If the node is a right child, replace all $U$-parameters in the equation by the corresponding $V$-parameters.
+\begin{description}
+	\item [Total Error at $c$]: let the total error at $c$ be denoted by $e_c$.
+\end{description}
+\begin{equation}
+	e_c = \frac{\partial J}{\partial c} + \delta_c \text{diag}(f_l) + e_h \frac{\partial h}{\partial c}
+\end{equation}
+\textbf{Note}: In the above equation, it is assumed that the node under consideration is a left child of its parent. If the node is a right child, replace $f_l$ by $f_r$.
+\begin{description}
+	\item [Output Errors]
+\end{description}
+let the output errors (going from node to its children be denoted by $\Delta_j$'s.
+\begin{equation}
+	\Delta_o = e_h \:\text{diag}(\tanh(c))\:\Sigma^{(o)}
+\end{equation}
+\begin{equation}
+	\Delta_i = e_c \:\text{diag}(u)\:\Sigma^{(i)}
+\end{equation}
+\begin{equation}
+	\Delta_u = e_c \:\text{diag}(i)\:\Sigma^{(u)}
+\end{equation}
+\begin{equation}
+	\Delta_l = e_c \:\text{diag}(c_l)\:\Sigma^{(l)}
+\end{equation}
+\begin{equation}
+	\Delta_r = e_c \:\text{diag}(c_r)\:\Sigma^{(r)}
+\end{equation}
+\begin{equation}
+	\Delta_c = e_c
+\end{equation}
+where $\Sigma^{(j)} = \text{diag}(a'_j)$ and $a'_j$ denotes the elementwise derivative of the activation function for $a_j$.
+\begin{description}
+	\item [Derivatives wrt $h$ and $c$]
+\end{description}
+\begin{equation}
+	\frac{\partial J}{\partial h} = \frac{\partial J}{\partial \theta} W^{(s)} = (\hat{y}-y)^T W^{(s)}
+\end{equation}
+where $\theta = W^{(s)}h+b^{(s)}$.
+\begin{equation}
+	\frac{\partial J}{\partial c} = \frac{\partial J}{\partial h} \:\text{diag}(o) \:\Sigma^{(c)}
+\end{equation}
+where $\Sigma^{(c)} = d(\tanh(c))/dc$.
+
+\subsection{Parameter Derivatives}
+\# = defined only for non-leaf nodes \\
+$\dagger$ = defined only for leaf nodes \\\\
+\textbf{Softmax Parameters}
+\begin{equation}
+	\frac{\partial J}{\partial b^{(s)}} = \frac{\partial J}{\partial \theta}; \:\:
+	\frac{\partial J}{\partial W^{(s)}} = h \frac{\partial J}{\partial \theta}
+\end{equation}
+\textbf{Bias Terms}
+\begin{equation}
+	\frac{\partial J}{\partial b^{(j)}} = \Delta_j;\:\:
+	\frac{\partial J^\#}{\partial b^{(f)}} = \Delta_l+\Delta_r
+\end{equation}
+where $j \in \{o, i, u\}$ \\\\
+\textbf{$U$, $V$ Parameters (\#)}
+\begin{equation}
+	\frac{\partial J}{\partial U^{(j)}} = h_l \Delta_j; \:\:
+	\frac{\partial J}{\partial V^{(j)}} = h_r \Delta_j
+\end{equation}
+where $j \in \{o, i, u, l, r\}$ \\\\
+\textbf{W Parameters ($\dagger$)}
+\begin{equation}
+	\frac{\partial J}{\partial W^{(j)}} = x \Delta_j
+\end{equation}
+where $j \in \{o, i, u\}$
+\end{document}
