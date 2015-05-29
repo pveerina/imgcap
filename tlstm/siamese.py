@@ -2,7 +2,6 @@ import numpy as np
 from collections import Counter
 
 class Siamese:
-
 	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, reg=1e-4):
 		self.sentenceDim = sentenceDim
 		self.imageDim = imageDim
@@ -43,7 +42,7 @@ class Siamese:
 			self.params.append(0.1*np.random.randn(self.sharedDim, self.sharedDim))
 			self.biases.append(np.zeros((self.sharedDim)))
 			self.grads.append((np.zeros(self.sharedDim, self.sharedDim)))
-	
+
 	def costAndGrad(self, mbdata, test=False):
 		cost = 0.0
 		batch_image_activations = []
@@ -51,36 +50,42 @@ class Siamese:
 		labels = Counter()
 		self.clearGradients()
 
-		correct_pair_cost = 0.0
-		for imageVec, sentenceVec, label in enumerate(mbdata):
+		for i, imageVec, sentenceVec in enumerate(mbdata):
 			image_activations = self.forwardPropImage(imageVec)
 			sentence_activations = self.forwardPropSentence(sentenceVec)
 			batch_image_activations.append(image_activations)
 			batch_sentence_activations.append(sentence_activations)
 
-			correct_pair_cost += image_activation.dot(sentence_activation)
+		image_deltas = []
+		sentence_deltas = []
+		cost = 0.0
+		for i, (image_activations, sentence_activations) in enumerate(zip(batch_image_activations, batch_sentence_activations)):
+			fimg_act = image_activations[-1]
+			sent_act = sentence_activations[-1]
+			correct_pair_cost = img_act.dot(sent_act)
+			
+			image_deltas.append(np.zeros_like(imageVec))
+			sentence_deltas.append(np.zeros_like(sentenceVec))
 
-		# assumes that each image/caption pair is unique in the minibatch
-		image_mismatch_cost = 0.0
-		sent_mismatch_cost = 0.0
-		for i in len(mbdata):
-			for j in len(mbdata):
-				if i != j:
-					image_mismatch_cost += image_activations[i].dot(sentence_activations[j])
-					sent_mismatch_cost += image_activations[j].dot(sentence_activations[i])
+			for j in range(len(batch_image_activations)):
+				if j != i:
+					contrast_image_act = batch_image_activations[j][-1]
+					contrast_sent_act = batch_sentence_activations[j][-1]
+					s1 = max(0, 1 - correct_pair_cost + img_act.dot(contrast_sent_act))
+					s2 = max(0, 1 - correct_pair_cost + contrast_image_act.dot(sent_act))
+					image_deltas[i] -=  (sent_act * (s1 > 0))  + (sent_act + contrast_sent_act) * (s2 >0)
+					sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
+					cost += s1 + s2
 
-		cost = max(0, 1 - correct_pair_cost + image_mismatch_cost) + max(0, 1 - correct_pair_cost + sent_mismatch_cost)
-		
 		img_input_grads = []
 		sentence_input_grads = []
-		for image_activations, sentence_activations in zip(batch_image_activations, batch_sentence_activations):
-			img_input_grad, sentence_input_grad = self.backwardProp(self, cost, image_activations, sentence_activations)
+		for i, image_activations, sentence_activations in zip(range(len(image_deltas)), batch_image_activations, batch_sentence_activations):
+			img_input_grad, sentence_input_grad = self.backwardProp(self, image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
 			img_input_grads.append(image_input_grad)
 			sentence_input_grads.append(sentence_input_grad)
 
 		grads = {"grads": self.grads, "biasGrads": self.biasGrads, "imageLayerGrad": self.imageGrad, "imageLayerBiasGrad":self.imageBiasGrad, "sentenceLayerGrad": self.sentenceGrad, "sentenceLayerBiasGrad":self.sentenceBiasGrad}
 		return cost, img_input_grads, sentence_input_grads, grads
-
 
 	def forwardPropImage(self, imageVec):
 		i1 = np.maximum(np.dot(self.imageLayer, imageVec)) + self.imageBias, 0)
@@ -103,16 +108,17 @@ class Siamese:
 
 		return sentence_activations
 
-	def backwardProp(self, cost, image_activations, sentence_activations):
+	def backwardProp(self, image_delta_top, sentence_delta_top, image_activations, sentence_activations):
 		# backpropogate, storing gradients
-		image_deltas = [0.0]
-		sent_deltas = [0.0]
+		image_deltas = [image_delta_top]
+		sent_deltas = [sentence_delta_top]
 
 		num_layers = len(self.params)
 		num_layers += 1
 
 		image_input_grad = 0
 		sentence_input_grad = 0
+
 		# go backwards in layers and then the last l
 		idx = reversed(range(num_layers))
 
@@ -147,8 +153,8 @@ class Siamese:
 		self.biasGrads = reverse(bias_grads)
 		return image_input_grad, sentence_input_grad
 
-	def updateParams(self, scale, update):
 
+	def updateParams(self, scale, update):
 		for i in xrange(len(self.params)):
 			self.params[i] += scale * update["grads"][i]
 			self.biases[i] += scale * update["biasGrads"][i]
