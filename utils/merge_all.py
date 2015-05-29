@@ -96,3 +96,10 @@ for asdf, k in enumerate(descs.keys()):
     tmptup.append(imgidx)
     tmptup.append(fn)
     total_ordering.append(tmptup)
+
+to_write = []
+for a,b,c,d,e,f in total_ordering:
+    to_write.append('%s\t%i\t%s\t%s\t%i\t%s'%(a,b,c,d,e,f))
+with open(os.path.join(droot, 'total_ordering'),'w') as f:
+    f.write('\n'.join(to_write))
+
