@@ -90,3 +90,11 @@ Temporary Items
 
 # Ignore CNN Codes
 *.feats
+*.npy
+trees
+word2index
+to_parse*
+dep_parse*
+glove.*.txt
+L_dict
+utils/treegen/parse*
