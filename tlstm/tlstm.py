@@ -2,8 +2,6 @@ import numpy as np
 import collections
 import pdb
 np.seterr(under='warn')
-import theano as th
-import theano.tensor as t
 
 # This is a Tree-structured LSTM
 # You must update the forward and backward propogation functions of this file.
@@ -12,16 +10,18 @@ import theano.tensor as t
 
 # tip: insert pdb.set_trace() in places where you are unsure whats going on
 
-# Softmax
-x = t.dvector('x')
-y = t.exp(x-t.max(x))
-y = y/t.sum(y)
-softmax = th.function([x], y)
+def softmax(x):
+	if x.ndim == 1:
+		x = np.exp(x-np.max(x))
+		x = x/np.sum(x)
+	else:
+		n = x.shape[0]
+		x = np.exp(x-np.reshape(np.max(x, axis=1), [n, 1]))
+		x = x/np.reshape(np.sum(x, axis=1), [n, 1])
+	return x
 
-# Sigmoid
-x = t.dmatrix('x')
-y = 1/(1+t.exp(-x))
-sigmoid = th.function([x], y)
+def sigmoid(x):
+	return 1/(1+np.exp(-x))
 
 def make_onehot(index, length):
 	y = np.zeros(length)
@@ -41,7 +41,7 @@ class TLSTM:
 
     def initParams(self):
         np.random.seed(12341)
-        
+
 	# Word vectors
         self.L = 0.01*np.random.randn(self.wvecDim,self.numWords)
 
@@ -50,27 +50,27 @@ class TLSTM:
 	self.bi = np.zeros((self.middleDim))
 	self.bo = np.zeros((self.middleDim))
 	self.bu = np.zeros((self.middleDim))
-	
+
 	# Input Weights
 	self.Wu = 0.01*np.random.randn(self.middleDim, self.wvecDim)
 	self.Wo = 0.01*np.random.randn(self.middleDim, self.wvecDim)
 	self.Wi = 0.01*np.random.randn(self.middleDim, self.wvecDim)
 	self.Wf = 0.01*np.random.randn(self.middleDim, self.wvecDim)
-	
+
 	# Left Hidden Weights
 	self.Ui = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
 	self.Ul = [[0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.Ur = [[0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.Uo = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
 	self.Uu = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
-	
+
 	# Right Hidden Weights
 	self.Vi = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
 	self.Vl = [[0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.Vr = [[0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.Vo = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
 	self.Vu = [0.01*np.random.randn(self.middleDim, self.middleDim) for j in range(self.paramDim)]
-	
+
         self.stack = [self.L]
 
 	self.stack.append(self.Wo)
@@ -93,7 +93,7 @@ class TLSTM:
 	for j in range(self.paramDim):
 		self.stack.append(self.Vu[j])
 	self.stack.append(self.bu)
-	
+
 	self.stack.append(self.Wf)
 	for j in range(self.paramDim):
 		for k in range(self.paramDim):
@@ -114,7 +114,7 @@ class TLSTM:
 	self.dbo = np.empty((self.middleDim))
 	self.dbu = np.empty((self.middleDim))
 	self.dbf = np.empty((self.middleDim))
-	
+
 	self.dWf = np.empty(self.Wf.shape)
 	self.dWi = np.empty(self.Wi.shape)
 	self.dWo = np.empty(self.Wo.shape)
@@ -125,14 +125,14 @@ class TLSTM:
 	self.dUi = [np.empty(self.Ui[0].shape) for j in range(self.paramDim)]
 	self.dUo = [np.empty(self.Uo[0].shape) for j in range(self.paramDim)]
 	self.dUu = [np.empty(self.Uu[0].shape) for j in range(self.paramDim)]
-        
+
 	self.dVl = [[np.empty(self.Vl[0][0].shape) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.dVr = [[np.empty(self.Vr[0][0].shape) for j in range(self.paramDim)] for k in range(self.paramDim)]
 	self.dVi = [np.empty(self.Vi[0].shape) for j in range(self.paramDim)]
 	self.dVo = [np.empty(self.Vo[0].shape) for j in range(self.paramDim)]
 	self.dVu = [np.empty(self.Vu[0].shape) for j in range(self.paramDim)]
-        
-    def costAndGrad(self,mbdata,test=False): 
+
+    def costAndGrad(self,mbdata,test=False):
         """
         Each datum in the minibatch is a tree.
         Forward prop each tree.
@@ -143,7 +143,7 @@ class TLSTM:
            Gradient w.r.t. L in sparse form.
 
         or if in test mode
-        Returns 
+        Returns
            cost, correctArray, guessArray, total
         """
         cost = 0.0
@@ -152,7 +152,7 @@ class TLSTM:
         total = 0.0
 
         self.L = self.stack[0]
-	
+
 	self.Wo = self.stack[1]
 	self.Uo = self.stack[2:2+self.paramDim]
 	self.Vo = self.stack[2+self.paramDim:2+2*self.paramDim]
@@ -207,11 +207,11 @@ class TLSTM:
         self.dL = collections.defaultdict(self.defaultVec)
 
         # Forward prop each tree in minibatch
-        for tree in mbdata: 
+        for tree in mbdata:
             c,tot = self.forwardProp(tree.root,correct,guess)
             cost += c
             total += tot
-            
+
         if test:
             return (1./len(mbdata))*cost,correct, guess, total
 
@@ -223,8 +223,8 @@ class TLSTM:
         scale = (1./self.mbSize)
         for v in self.dL.itervalues():
             v *=scale
-        
-        # Add L2 Regularization 
+
+        # Add L2 Regularization
         cost += (self.rho/2)*np.sum(self.Wf**2)
         cost += (self.rho/2)*np.sum(self.Wi**2)
         cost += (self.rho/2)*np.sum(self.Wo**2)
@@ -237,7 +237,7 @@ class TLSTM:
 		cost += (self.rho/2)*np.sum(self.Ui[j]**2)
 		cost += (self.rho/2)*np.sum(self.Uo[j]**2)
 		cost += (self.rho/2)*np.sum(self.Uu[j]**2)
-        
+
 	for j in range(self.paramDim):
 		for k in range(self.paramDim):
 			cost += (self.rho/2)*np.sum(self.Vl[j][k]**2)
@@ -245,7 +245,7 @@ class TLSTM:
 		cost += (self.rho/2)*np.sum(self.Vi[j]**2)
 		cost += (self.rho/2)*np.sum(self.Vo[j]**2)
 		cost += (self.rho/2)*np.sum(self.Vu[j]**2)
-        
+
 	grad_stack = [self.dL]
 
 	grad_stack.append(scale*(self.dWo + self.Wo*self.rho))
@@ -254,21 +254,21 @@ class TLSTM:
 	for j in range(self.paramDim):
 		grad_stack.append(scale*(self.dVo[j] + self.Vo[j]*self.rho))
 	grad_stack.append(scale*self.dbo)
-	
+
 	grad_stack.append(scale*(self.dWi + self.Wi*self.rho))
 	for j in range(self.paramDim):
 		grad_stack.append(scale*(self.dUi[j] + self.Ui[j]*self.rho))
 	for j in range(self.paramDim):
 		grad_stack.append(scale*(self.dVi[j] + self.Vi[j]*self.rho))
 	grad_stack.append(scale*self.dbi)
-	
+
 	grad_stack.append(scale*(self.dWu + self.Wu*self.rho))
 	for j in range(self.paramDim):
 		grad_stack.append(scale*(self.dUu[j] + self.Uu[j]*self.rho))
 	for j in range(self.paramDim):
 		grad_stack.append(scale*(self.dVu[j] + self.Vu[j]*self.rho))
 	grad_stack.append(scale*self.dbu)
-	
+
 	grad_stack.append(scale*(self.dWf + self.Wf*self.rho))
 	for j in range(self.paramDim):
 		for k in range(self.paramDim):
@@ -284,7 +284,7 @@ class TLSTM:
 			grad_stack.append(scale*(self.dVr[j][k] + self.Vr[j][k]*self.rho))
 	grad_stack.append(scale*self.dbf)
 
-	return scale*cost, grad_stack 
+	return scale*cost, grad_stack
 
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0
@@ -296,19 +296,21 @@ class TLSTM:
 		self.u = np.tanh(np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1)))
 		node.hActs1 = np.multiply(self.i, self.u)
 	else:
-		cost_left = 0
-		total_left = 0
+		#cost_left = 0
+		#total_left = 0
 		for j in node.left:
-			cost_temp, total_temp = self.forwardProp(j, correct, guess)
-			cost_left += cost_temp
-			total_left += total_temp
-		cost_right = 0
-		total_right = 0
+			self.forwardProp(j, correct, guess)
+			#cost_temp, total_temp = self.forwardProp(j, correct, guess)
+			#cost_left += cost_temp
+			#total_left += total_temp
+		#cost_right = 0
+		#total_right = 0
 		for j in node.right:
-			cost_temp, total_temp = self.forwardProp(j, correct, guess)
-			cost_right += cost_temp
-			total_right += total_temp
-		
+			self.forwardProp(j, correct, guess)
+			#cost_temp, total_temp = self.forwardProp(j, correct, guess)
+			#cost_right += cost_temp
+			#total_right += total_temp
+
 		si = np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1))
 		for j in node.left:
 			idx = min(j.idx, self.paramDim-1)
@@ -317,7 +319,7 @@ class TLSTM:
 			idx = min(j.idx, self.paramDim-1)
 			si += np.dot(self.Vi[idx], j.hActs2)
 		self.i = sigmoid(si)
-		
+
 		su = np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1))
 		for j in node.left:
 			idx = min(j.idx, self.paramDim-1)
@@ -326,7 +328,7 @@ class TLSTM:
 			idx = min(j.idx, self.paramDim-1)
 			su += np.dot(self.Vu[idx], j.hActs2)
 		self.u = np.tanh(su)
-		
+
 		so = np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1))
 		for j in node.left:
 			idx = min(j.idx, self.paramDim-1)
@@ -335,7 +337,7 @@ class TLSTM:
 			idx = min(j.idx, self.paramDim-1)
 			so += np.dot(self.Vo[idx], j.hActs2)
 		self.o = sigmoid(so)
-		
+
 		self.l = []
 		sl = []
 		for j in range(self.paramDim):
@@ -353,7 +355,7 @@ class TLSTM:
 				sl[idx1] += np.dot(self.Vl[idx1][idx2], k.hActs2)
 		for j in range(self.paramDim):
 			self.l[j] = sigmoid(sl[j])
-				
+
 		self.r = []
 		sr = []
 		for j in range(self.paramDim):
@@ -370,7 +372,7 @@ class TLSTM:
 				sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2)
 		for j in range(self.paramDim):
 			self.r[j] = sigmoid(sr[j])
-				
+
 		node.hActs1 = np.multiply(self.i, self.u)
 		for j in node.left:
 			idx = min(j.idx, self.paramDim-1)
@@ -379,16 +381,16 @@ class TLSTM:
 			idx = min(j.idx, self.paramDim-1)
 			node.hActs1 += np.multiply(self.r[idx], j.hActs1)
 	node.hActs2 = np.multiply(self.o, np.tanh(node.hActs1))
-	node.probs = softmax(node.hActs2.flatten())
-	guess.append(np.argmax(node.probs))
-	node.label = np.mod(node.word, middleDim)
-	cost += -np.log(node.probs[node.label])
-	correct.append(node.label)
-	if not node.isLeaf:
-		cost += cost_left + cost_right
-		total += total_left + total_right
+	#node.probs = softmax(node.hActs2.flatten())
+	#guess.append(np.argmax(node.probs))
+	#node.label = np.mod(node.word, middleDim)
+	#cost += -np.log(node.probs[node.label])
+	#correct.append(node.label)
+	#if not node.isLeaf:
+	#	cost += cost_left + cost_right
+	#	total += total_left + total_right
 	node.fprop = True
-        return cost, total + 1
+        #return cost, total + 1
 
     def backProp(self,node,error=None):
 
@@ -397,17 +399,22 @@ class TLSTM:
 
         # this is exactly the same setup as backProp in rnn.py
 	# theta
-	dJ_dtheta = np.reshape(node.probs-make_onehot(node.label, self.middleDim), (self.middleDim, 1))
+	#dJ_dtheta = np.reshape(node.probs-make_onehot(node.label, self.middleDim), (self.middleDim, 1))
 	# h
-	dJ_dh = dJ_dtheta
+	#dJ_dh = dJ_dtheta
 	# c
 	dc_dsc = np.diag((1-node.hActs1**2).flatten())
 	dh_dc = np.dot(dc_dsc, np.diag(self.o.flatten()))
-	dJ_dc = np.dot(dh_dc, dJ_dh)
+	#dJ_dc = np.dot(dh_dc, dJ_dh)
 	# Error produced within cell
-	error_at_h = dJ_dh
-	error_at_c = dJ_dc
+	#error_at_h = dJ_dh
+	#error_at_c = dJ_dc
+	error_at_h = np.zeros((self.middleDim, 1))
+	error_at_c = np.zeros((self.middleDim, 1))
 	# Inherited error
+	if node.parent == None:
+		error_at_h = error
+		error_at_c = np.dot(dh_dc, error_at_h)
 	if node.parent != None:
 		[in_ho, in_hi, in_hu] = error[0:3]
 		in_hl = error[3:3+self.paramDim]
@@ -438,7 +445,7 @@ class TLSTM:
 	du_dsu = np.diag((1-self.u**2).flatten())
 	dc_dsu = np.dot(du_dsu, np.diag(self.i.flatten()))
 	if not node.isLeaf:
-		
+
 		# l
 		dl_dsl = []
 		dc_dsl = []
@@ -459,7 +466,7 @@ class TLSTM:
 		for j in node.right:
 			idx = min(j.idx, self.paramDim-1)
 			dc_dsr[idx] += np.dot(dr_dsr[idx], np.diag(j.hActs1.flatten()))
-		
+
 		# Error out
 		dJ_dso = np.dot(dh_dso, error_at_h)
 		dJ_dsi = np.dot(dc_dsi, error_at_c)
@@ -505,8 +512,8 @@ class TLSTM:
 				self.dVl[k][idx] += np.dot(dJ_dsl[k], j.hActs2.T)
 				self.dVr[k][idx] += np.dot(dJ_dsr[k], j.hActs2.T)
 		# Ws
-		self.dWo += np.dot(dJ_dso, x.T) 
-		self.dWu += np.dot(dJ_dsu, x.T) 
+		self.dWo += np.dot(dJ_dso, x.T)
+		self.dWu += np.dot(dJ_dsu, x.T)
 		self.dWi += np.dot(dJ_dsi, x.T)
 		for j in range(self.paramDim):
 			self.dWf += np.dot(dJ_dsl[j], x.T)
@@ -516,8 +523,8 @@ class TLSTM:
 		for j in range(self.paramDim):
 			temp += np.dot(self.Wf.T, dJ_dsl[j]).flatten()
 			temp += np.dot(self.Wf.T, dJ_dsr[j]).flatten()
-		self.dL[node.word] = temp 
-		
+		self.dL[node.word] = temp
+
 		# Recursion
 		for j in node.left:
 			self.backProp(j, error_out)
@@ -538,7 +545,7 @@ class TLSTM:
 		self.dWu += np.dot(dJ_dsu, x.T)
 		# L
 		self.dL[node.word] = np.dot(self.Wo.T, dJ_dso).flatten() + np.dot(self.Wi.T, dJ_dsi).flatten() + np.dot(self.Wu.T, dJ_dsu).flatten()
-    
+
     def updateParams(self,scale,update,log=False):
         """
         Updates parameters as
@@ -576,7 +583,7 @@ class TLSTM:
         print "Checking dW..."
         for W,dW in zip(self.stack[1:],grad[1:]):
 	    W = W[...,None] # add dimension since bias is flat
-            dW = dW[...,None] 
+            dW = dW[...,None]
             err2 = 0.0
             for i in xrange(W.shape[0]):
                 for j in xrange(W.shape[1]):
@@ -621,7 +628,7 @@ if __name__ == '__main__':
     mbData = []
     for j in range(dataSize):
     	mbData.append(treeM.Tree(f.readline().split('\t')[1].strip('\n')))
-    
+
     #import tree as treeM
     #train = treeM.loadTrees()
     #numW = len(treeM.loadWordMap())
