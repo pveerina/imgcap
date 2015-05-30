@@ -19,12 +19,13 @@ def make_onehot(index, length):
 
 class TLSTM:
 
-    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30,rho=1e-4, topLayer = None):
+    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None):
         self.wvecDim = wvecDim
         self.middleDim = middleDim
         self.paramDim = paramDim
         self.numWords = numWords
         self.mbSize = mbSize
+        self.scale = scale
         self.defaultVec = lambda : np.zeros((wvecDim,))
         self.rho = rho
         self.topLayer = topLayer
@@ -248,9 +249,8 @@ class TLSTM:
             self.backProp(tree.root, cerror)
 
         # scale cost and grad by mb size
-        scale = (1./(self.mbSize**2))
         for v in self.dL.itervalues():
-            v *=scale
+            v *=self.scale
 
         # Add L2 Regularization
         cost += (self.rho/2)*np.sum(self.Wf**2)
@@ -312,13 +312,13 @@ class TLSTM:
                 for y in x:
                     if type(y) == list:
                         for z in x:
-                            z *= scale
+                            z *= self.scale
                     else:
-                        y *= scale
+                        y *= self.scale
             else:
-                x *= scale
+                x *= self.scale
 
-        return scale*cost
+        return self.scale*cost
 
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0

@@ -2,12 +2,13 @@ import numpy as np
 from collections import Counter
 
 class Twin:
-	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, reg=1e-4):
+	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, scale, reg=1e-4):
 		self.sentenceDim = sentenceDim
 		self.imageDim = imageDim
 		self.reg = reg
 		self.sharedDim = sharedDim
 		self.numLayers = numLayers
+		self.scale = scale
 		self.initParams()
 
 	def initParams(self):
@@ -63,11 +64,11 @@ class Twin:
 				x[:] = 0.
 
 	def costAndGrad(self, mbdata, test=False):
+		mbSize = len(mbdata)
 		cost = 0.0
 		batch_image_activations = []
 		batch_sentence_activations = []
 		self.clearGradients()
-		scale = 1./(len(mbdata)**2)
 
 		for i, (imageVec, sentenceVec) in enumerate(mbdata):
 			image_activations = self.forwardPropImage(imageVec)
@@ -100,7 +101,7 @@ class Twin:
 
 		# add in L2-regularization
 		cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
-		cost *= scale
+		cost *= self.scale
 
 		img_input_grads = []
 		sentence_input_grads = []
@@ -114,10 +115,10 @@ class Twin:
 		for n in range(len(self.img_grads)):
 			self.img_grads[n] += self.reg * self.img_params[n]
 			self.sent_grads[n] += self.reg * self.sent_params[n]
-			self.img_grads[n] *= scale
-			self.img_biasGrads[n] *= scale
-			self.sent_grads[n] *= scale
-			self.seng_biasGrads[n] *= scale
+			self.img_grads[n] *= self.scale
+			self.img_biasGrads[n] *= self.scale
+			self.sent_grads[n] *= self.scale
+			self.seng_biasGrads[n] *= self.scale
 
 		return cost, sentence_input_grads
 
