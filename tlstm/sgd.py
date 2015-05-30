@@ -34,8 +34,6 @@ class SGD:
         print "running SGD"
         mbdata = self.dh.nextBatch()
         while mbdata != None:
-            import pdb
-            pdb.set_trace()
             self.it = self.dh.cur_iteration
             cost = self.model1.costAndGrad(mbdata)
             grad1 = self.model1.grads
@@ -51,9 +49,18 @@ class SGD:
                 scale = -self.alpha
 
             elif self.optimizer == 'adagrad':
+                ## ADAGRAD CURRENTLY DOESN'T WORK, SINCE THE GRADIENTS IN
+                ## BOTH NETWORKS ARE REPRESENTED AS LISTS RATHER THAN
+                ## MATRICES
                 #
                 # Perform update for network 1 first
                 #
+                # for gt1, g1 in zip(self.gradt[1:], grad1[1:]):
+                #     if type(g1) == list:
+                #         for gt2, g2 in zip(gt1, g1):
+                #             if type(g2) == list:
+                #                 for gt3, g3 in zip(gt2, g2):
+
                 self.gradt1[1:] = [gt+g**2
                         for gt,g in zip(self.gradt1[1:],grad1[1:])]
                 update =  [g*(1./np.sqrt(gt))
@@ -79,7 +86,7 @@ class SGD:
 
             # update params
             self.model1.updateParams(scale,update1,log=False)
-            self.model2.updateParams(scale,update1)
+            self.model2.updateParams(scale,update2)
 
             self.costt.append(cost)
             if self.it%1 == 0:

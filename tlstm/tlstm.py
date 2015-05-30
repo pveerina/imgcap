@@ -248,7 +248,7 @@ class TLSTM:
             self.backProp(tree.root, cerror)
 
         # scale cost and grad by mb size
-        scale = (1./self.mbSize)
+        scale = (1./(self.mbSize**2))
         for v in self.dL.itervalues():
             v *=scale
 

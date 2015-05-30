@@ -34,7 +34,5 @@ net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mb
 # instantiate the SGD
 sgd = optimizer.SGD(net1, opts.alpha, dh, optimizer='sgd')
 
-mbdata = dh.nextBatch()
 batch_cnt = 0
-while mbdata != None:
-    sgd.run()
+sgd.run()

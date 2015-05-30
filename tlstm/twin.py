@@ -67,6 +67,7 @@ class Twin:
 		batch_image_activations = []
 		batch_sentence_activations = []
 		self.clearGradients()
+		scale = 1./(len(mbdata)**2)
 
 		for i, (imageVec, sentenceVec) in enumerate(mbdata):
 			image_activations = self.forwardPropImage(imageVec)
@@ -96,8 +97,10 @@ class Twin:
 					image_deltas[i] -=  (sent_act * (s1 > 0))  + (sent_act + contrast_sent_act) * (s2 >0)
 					sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
 					cost += s1 + s2
-			# add in L2-regularization
-			cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
+
+		# add in L2-regularization
+		cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
+		cost *= scale
 
 		img_input_grads = []
 		sentence_input_grads = []
@@ -111,6 +114,10 @@ class Twin:
 		for n in range(len(self.img_grads)):
 			self.img_grads[n] += self.reg * self.img_params[n]
 			self.sent_grads[n] += self.reg * self.sent_params[n]
+			self.img_grads[n] *= scale
+			self.img_biasGrads[n] *= scale
+			self.sent_grads[n] *= scale
+			self.seng_biasGrads[n] *= scale
 
 		return cost, sentence_input_grads
 
@@ -166,6 +173,6 @@ class Twin:
 		for i in xrange(len(self.sent_params)):
 			self.sent_params[i] += scale * sent_grads[i]
 			self.img_params[i] += scale * img_grads[i]
-			self.sent_biases[i] += scale * sent_biasGrad[i]
-			self.img_biases[i] += scale * img_biasGrad[i]
+			self.sent_biases[i] += scale * sent_biasGrads[i]
+			self.img_biases[i] += scale * img_biasGrads[i]
 
