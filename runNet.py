@@ -26,10 +26,10 @@ dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_s
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 # instantiate the second 'layer'
-net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, opts.mbSize*(opts.mbSize-1), opts.reg)
+net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg)
 
 # instantiate the first 'layer'
-net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, opts.mbSize*(opts.mbSize-1), opts.rho, net2)
+net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), opts.rho, net2)
 
 # instantiate the SGD
 sgd = optimizer.SGD(net1, opts.alpha, dh, optimizer='sgd')

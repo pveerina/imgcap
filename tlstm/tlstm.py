@@ -239,7 +239,7 @@ class TLSTM:
         cost, error = self.topLayer.costAndGrad(newmbdata)
 
         if test:
-            return (1./len(mbdata))*cost, total
+            return self.scale*cost, total
 
         # Back prop each tree in minibatch
         for n, (_, tree) in enumerate(mbdata):
@@ -274,51 +274,57 @@ class TLSTM:
             cost += (self.rho/2)*np.sum(self.Vo[j]**2)
             cost += (self.rho/2)*np.sum(self.Vu[j]**2)
 
+        self.dWo *= self.scale
         self.dWo += self.Wo*self.rho
         for j in range(self.paramDim):
             self.dUo[j] += self.Uo[j]*self.rho
         for j in range(self.paramDim):
             self.dVo[j] += self.Vo[j]*self.rho
 
+        self.dWi *= self.scale
         self.dWi += self.Wi*self.rho
         for j in range(self.paramDim):
+            self.dUi[j] *= self.scale
             self.dUi[j] += self.Ui[j]*self.rho
         for j in range(self.paramDim):
+            self.dVi[j] *= self.scale
             self.dVi[j] += self.Vi[j]*self.rho
 
+        self.dWu *= self.scale
         self.dWu += self.Wu*self.rho
         for j in range(self.paramDim):
+            self.dUu[j] *= self.scale
             self.dUu[j] += self.Uu[j]*self.rho
         for j in range(self.paramDim):
+            self.dVu[j] *= self.scale
             self.dVu[j] += self.Vu[j]*self.rho
 
+        self.dWf *= self.scale
         self.dWf += self.Wf*self.rho
         for j in range(self.paramDim):
             for k in range(self.paramDim):
+                self.dUl[j][k] *= self.scale
                 self.dUl[j][k] += self.Ul[j][k]*self.rho
         for j in range(self.paramDim):
             for k in range(self.paramDim):
+                self.dVl[j][k] *= self.scale
                 self.dVl[j][k] += self.Vl[j][k]*self.rho
         for j in range(self.paramDim):
             for k in range(self.paramDim):
+                self.dUr[j][k] *= self.scale
                 self.dUr[j][k] += self.Ur[j][k]*self.rho
         for j in range(self.paramDim):
             for k in range(self.paramDim):
+                self.dVr[j][k] *= self.scale
                 self.dVr[j][k] += self.Vr[j][k]*self.rho
 
-        # scale all the gradients
-        for x in self.grads[1:]:
-            if type(x) == list:
-                for y in x:
-                    if type(y) == list:
-                        for z in x:
-                            z *= self.scale
-                    else:
-                        y *= self.scale
-            else:
-                x *= self.scale
+        # scale all the biases
+        self.dbi *= self.scale
+        self.dbo *= self.scale
+        self.dbu *= self.scale
+        self.dbf *= self.scale
 
-        return self.scale*cost
+        return cost
 
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0

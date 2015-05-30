@@ -88,7 +88,6 @@ class Twin:
 
 			image_deltas.append(np.zeros_like(img_act))
 			sentence_deltas.append(np.zeros_like(sent_act))
-
 			for j in range(len(batch_image_activations)):
 				if j != i:
 					contrast_image_act = batch_image_activations[j][-1]
@@ -99,9 +98,11 @@ class Twin:
 					sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
 					cost += s1 + s2
 
+		cost *= self.scale
 		# add in L2-regularization
 		cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
-		cost *= self.scale
+		if test:
+			return cost
 
 		img_input_grads = []
 		sentence_input_grads = []
@@ -110,6 +111,8 @@ class Twin:
 			img_input_grad, sentence_input_grad = self.backwardProp( image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
 			img_input_grads.append(img_input_grad)
 			sentence_input_grads.append(sentence_input_grad)
+			import pdb
+			pdb.set_trace()
 
 		# remember to add in the L2-regularization for the parameters!
 		for n in range(len(self.img_grads)):
@@ -118,7 +121,7 @@ class Twin:
 			self.img_grads[n] *= self.scale
 			self.img_biasGrads[n] *= self.scale
 			self.sent_grads[n] *= self.scale
-			self.seng_biasGrads[n] *= self.scale
+			self.sent_biasGrads[n] *= self.scale
 
 		return cost, sentence_input_grads
 
