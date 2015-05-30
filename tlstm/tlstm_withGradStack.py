@@ -274,50 +274,45 @@ class TLSTM:
             cost += (self.rho/2)*np.sum(self.Vo[j]**2)
             cost += (self.rho/2)*np.sum(self.Vu[j]**2)
 
-        self.dWo += self.Wo*self.rho
-        for j in range(self.paramDim):
-            self.dUo[j] += self.Uo[j]*self.rho
-        for j in range(self.paramDim):
-            self.dVo[j] += self.Vo[j]*self.rho
+        grad_stack = [self.dL]
 
-        self.dWi += self.Wi*self.rho
+        grad_stack.append(scale*(self.dWo + self.Wo*self.rho))
         for j in range(self.paramDim):
-            self.dUi[j] += self.Ui[j]*self.rho
+            grad_stack.append(scale*(self.dUo[j] + self.Uo[j]*self.rho))
         for j in range(self.paramDim):
-            self.dVi[j] += self.Vi[j]*self.rho
+            grad_stack.append(scale*(self.dVo[j] + self.Vo[j]*self.rho))
+        grad_stack.append(scale*self.dbo)
 
-        self.dWu += self.Wu*self.rho
+        grad_stack.append(scale*(self.dWi + self.Wi*self.rho))
         for j in range(self.paramDim):
-            self.dUu[j] += self.Uu[j]*self.rho
+            grad_stack.append(scale*(self.dUi[j] + self.Ui[j]*self.rho))
         for j in range(self.paramDim):
-            self.dVu[j] += self.Vu[j]*self.rho
+            grad_stack.append(scale*(self.dVi[j] + self.Vi[j]*self.rho))
+        grad_stack.append(scale*self.dbi)
 
-        self.dWf += self.Wf*self.rho
+        grad_stack.append(scale*(self.dWu + self.Wu*self.rho))
+        for j in range(self.paramDim):
+            grad_stack.append(scale*(self.dUu[j] + self.Uu[j]*self.rho))
+        for j in range(self.paramDim):
+            grad_stack.append(scale*(self.dVu[j] + self.Vu[j]*self.rho))
+        grad_stack.append(scale*self.dbu)
+
+        grad_stack.append(scale*(self.dWf + self.Wf*self.rho))
         for j in range(self.paramDim):
             for k in range(self.paramDim):
-                self.dUl[j][k] += self.Ul[j][k]*self.rho
+                grad_stack.append(scale*(self.dUl[j][k] + self.Ul[j][k]*self.rho))
         for j in range(self.paramDim):
             for k in range(self.paramDim):
-                self.dVl[j][k] += self.Vl[j][k]*self.rho
+                grad_stack.append(scale*(self.dVl[j][k] + self.Vl[j][k]*self.rho))
         for j in range(self.paramDim):
             for k in range(self.paramDim):
-                self.dUr[j][k] += self.Ur[j][k]*self.rho
+                grad_stack.append(scale*(self.dUr[j][k] + self.Ur[j][k]*self.rho))
         for j in range(self.paramDim):
             for k in range(self.paramDim):
-                self.dVr[j][k] += self.Vr[j][k]*self.rho
+                grad_stack.append(scale*(self.dVr[j][k] + self.Vr[j][k]*self.rho))
+        grad_stack.append(scale*self.dbf)
 
-        for x in self.grads:
-            if type(x) == list:
-                for y in x:
-                    if type(y) == list:
-                        for z in x:
-                            z *= scale
-                    else:
-                        y *= scale
-            else:
-                x *= scale
-
-        return scale*cost
+        return scale*cost, grad_stack
 
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0

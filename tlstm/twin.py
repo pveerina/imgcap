@@ -54,11 +54,11 @@ class Twin:
 			self.img_biases.append(yb())
 			self.img_biasGrads.append(ybg())
 
-		self.gradStack = [self.sent_grads, self.sent_biasGrads, self.img_grads, self.img_biasGrads]
+		self.grads = [self.sent_grads, self.sent_biasGrads, self.img_grads, self.img_biasGrads]
 		self.stack = [self.sent_params, self.sent_biases, self.img_params, self.img_biases]
 
 	def clearGradients(self):
-		for y in self.gradStack:
+		for y in self.grads:
 			for x in y:
 				x[:] = 0.
 
@@ -112,10 +112,6 @@ class Twin:
 			self.img_grads[n] += self.reg * self.img_params[n]
 			self.sent_grads[n] += self.reg * self.sent_params[n]
 
-		self.grads = {"img_grads": self.img_grads, \
-				 "sent_grads": self.sent_grads, \
-				 "img_biasGrads": self.img_biasGrads, \
-				 "sent_biasGrads": self.sent_biasGrads}
 		return cost, sentence_input_grads
 
 	def forwardPropImage(self, imageVec):
@@ -165,6 +161,8 @@ class Twin:
 
 
 	def updateParams(self, scale, update):
+		sent_grads, sent_biasGrads, img_grads, img_biasGrads = update
+
 		for i in xrange(len(self.params)):
 			self.params[i] += scale * update["grads"][i]
 			self.biases[i] += scale * update["biasGrads"][i]

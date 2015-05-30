@@ -115,6 +115,7 @@ class DataHandler():
 
         self.cur_epoch = 0
         self.cur_megabatch = 0
+        self.cur_iteration = 0
 
         self.megabatch_queue = []
         self.minibatch_queue = []
@@ -127,8 +128,10 @@ class DataHandler():
             self.epochAdvance()
             self.cur_megabatch = 0
             self.megabatchAdvance()
+            self.cur_iteration = 0
         elif not len(self.minibatch_queue):
             self.megabatchAdvance()
+        self.cur_iteration += 1
         return self.minibatch_queue.pop(0)
     def epochAdvance(self):
         self.cur_epoch += 1
