@@ -172,14 +172,16 @@ for i,j,k in zip(names, grads, comp_grads):
 for k in sorted(gradD.keys()):
     try:
         a, b = gradD[k]
-        a = a.flatten()
-        b = b.flatten()
+        a = a.squeeze()
+        b = b.squeeze()
+        osz = [a.shape, b.shape]
         error = rel_error(a,b)
-        print('%s : %g [%s]'%(k, error, str(a.shape)))
+        print('%s : %g [%s vs %s]'%(k, error, str(osz[0]), str(osz[1])))
     except:
         a = np.array(gradD[k][0].values())
         b = np.array(gradD[k][1].values())
-        a = a.flatten()
-        b = b.flatten()
+        a = a.squeeze()
+        b = b.squeeze()
+        osz = [a.shape, b.shape]
         error = rel_error(a,b)
-        print('%s : %g [%s]'%(k, error, str(a.shape)))
+        print('%s : %g [%s vs %s]'%(k, error, str(osz[0]), str(osz[1])))

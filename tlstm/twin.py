@@ -100,14 +100,14 @@ class Twin:
 		# cy, cx = correct y, x
 		# iy, ix = incorrect y, x
 		for i, (cy, cx) in enumerate(zip(ys, xs)):
-			c1s = []
-			c2s = []
+			c1s = np.zeros(len(ys))
+			c2s = np.zeros(len(ys))
 			cpair = cx.dot(cy)
 			for j, (iy, ix) in enumerate(zip(ys, xs)):
 				if i != j:
 					cpair = cx.dot(cy)
-					c1s.append(max(0, 1 - cpair + cx.dot(iy)))
-					c2s.append(max(0, 1 - cpair + ix.dot(cy)))
+					c1s[j] = max(0, 1 - cpair + cx.dot(iy))
+					c2s[j] = max(0, 1 - cpair + ix.dot(cy))
 			s1.append(c1s)
 			s2.append(c2s)
 			cost += np.sum(c1s) + np.sum(c2s)
@@ -119,11 +119,12 @@ class Twin:
 			c_sd = 0
 			for j, (iy, ix) in enumerate(zip(ys, xs)):
 				if i != j:
-					c_sd += (iy - cy)*(s1[i]>0) - cy*(s2[i]>0) + iy * (s2[j]>0)
-					c_id += (ix - cx)*(s2[i]>0) - cx*(s1[i]>0) + ix * (s1[j]>0)
+					# delta w.r.t. x
+					c_sd += (iy - cy)*(s1[i][j]>0) - cy*(s2[i][j]>0) + iy * (s2[j][i]>0)
+					# delta w.r.t y
+					c_id += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
 			image_deltas.append(c_id)
 			sentence_deltas.append(c_sd)
-
 		if test:
 			return cost
 
