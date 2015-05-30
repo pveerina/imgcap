@@ -1,3 +1,7 @@
+# this version of 'twin' preserves the 'old' style stacks, which were
+# lists of lists. however, since python passes by reference,
+# this is redundant
+
 import numpy as np
 from collections import Counter
 
@@ -44,32 +48,24 @@ class Twin:
 		self.img_biases.append(yb())
 		self.img_biasGrads.append(ybg())
 
-		self.sent_param_names = []
-		self.sent_bias_names = []
-		self.img_param_names = []
-		self.img_bias_names = []
 		# and for the remaining layers
 		for l in xrange(self.numLayers):
 			self.sent_params.append(yW())
-			self.sent_param_names.append('sent_W%i'%(l))
 			self.sent_grads.append(yWg())
 			self.sent_biases.append(yb())
-			self.sent_bias_names.append('sent_b%i'%(l))
 			self.sent_biasGrads.append(ybg())
 			self.img_params.append(yW())
-			self.img_param_names.append('img_W%i'%(l))
 			self.img_grads.append(yWg())
 			self.img_biases.append(yb())
-			self.img_bias_names.append('img_b%i'%(l))
 			self.img_biasGrads.append(ybg())
 
-		self.grads = self.sent_grads+self.sent_biasGrads+self.img_grads+self.img_biasGrads
-		self.stack = self.sent_params+self.sent_biases+self.img_params+self.img_biases
-		self.names = self.sent_param_names + self.sent_bias_names + self.img_param_names + self.sent_bias_names
+		self.grads = [self.sent_grads, self.sent_biasGrads, self.img_grads, self.img_biasGrads]
+		self.stack = [self.sent_params, self.sent_biases, self.img_params, self.img_biases]
 
 	def clearGradients(self):
 		for y in self.grads:
-			y[:] = 0.
+			for x in y:
+				x[:] = 0.
 
 	def costAndGrad(self, mbdata, test=False):
 		mbSize = len(mbdata)
@@ -133,8 +129,8 @@ class Twin:
 
 		# remember to add in the L2-regularization for the parameters!
 		for n in range(len(self.img_grads)):
-			self.img_grads[n] += (self.reg / 2) * self.img_params[n]
-			self.sent_grads[n] += (self.reg / 2) * self.sent_params[n]
+			self.img_grads[n] += self.reg * self.img_params[n]
+			self.sent_grads[n] += self.reg * self.sent_params[n]
 			self.img_grads[n] *= self.scale
 			self.img_biasGrads[n] *= self.scale
 			self.sent_grads[n] *= self.scale

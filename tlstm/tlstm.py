@@ -38,7 +38,7 @@ class TLSTM:
 
         # Word vectors
         #self.L = 0.01*np.random.randn(self.wvecDim,self.numWords)
-        self.L = os.path.join(self.root, 'data','trees','Lmat.npy')
+        self.L = np.load(os.path.join(self.root, 'data','trees','Lmat.npy'))
 
         # Bias Terms
         self.bf = np.zeros((self.middleDim))
@@ -90,70 +90,88 @@ class TLSTM:
         self.dVu = [np.empty(self.Vu[0].shape) for j in range(self.paramDim)]
 
         # construct the stack and the gradient stack (grads)
-
+        self.names = ['L']
         self.stack = [self.L]
         self.grads = [None] # dL isn't defined until costAndGrad?
 
         self.stack.append(self.Wo)
+        self.names.append('Wo')
         self.grads.append(self.dWo)
 
         for j in range(self.paramDim):
             self.stack.append(self.Uo[j])
+            self.names.append('Uo%i'%j)
             self.grads.append(self.dUo[j])
         for j in range(self.paramDim):
             self.stack.append(self.Vo[j])
+            self.names.append('Vo%i'%j)
             self.grads.append(self.dVo[j])
 
         self.stack.append(self.bo)
+        self.names.append('bo')
         self.grads.append(self.dbo)
 
         self.stack.append(self.Wi)
+        self.names.append('Wi')
         self.grads.append(self.dWi)
 
         for j in range(self.paramDim):
             self.stack.append(self.Ui[j])
+            self.names.append('Ui%i'%j)
             self.grads.append(self.dUi[j])
         for j in range(self.paramDim):
             self.stack.append(self.Vi[j])
+            self.names.append('Vi%i'%j)
             self.grads.append(self.dVi[j])
 
         self.stack.append(self.bi)
+        self.names.append('bi')
         self.grads.append(self.dbi)
 
         self.stack.append(self.Wu)
+        self.names.append('Wu')
         self.grads.append(self.dWu)
 
         for j in range(self.paramDim):
             self.stack.append(self.Uu[j])
+            self.names.append('Uu%i'%j)
             self.grads.append(self.dUu[j])
         for j in range(self.paramDim):
             self.stack.append(self.Vu[j])
+            self.names.append('Vu%i'%j)
             self.grads.append(self.dVu[j])
 
         self.stack.append(self.bu)
+        self.names.append('bu')
         self.grads.append(self.dbu)
 
         self.stack.append(self.Wf)
+        self.names.append('Wf')
         self.grads.append(self.dWf)
 
         for j in range(self.paramDim):
             for k in range(self.paramDim):
                 self.stack.append(self.Ul[j][k])
+                self.names.append('Ul%i_%i'%(j,k))
                 self.grads.append(self.dUl[j][k])
         for j in range(self.paramDim):
             for k in range(self.paramDim):
                 self.stack.append(self.Vl[j][k])
+                self.names.append('Vl%i_%i'%(j,k))
                 self.grads.append(self.dVl[j][k])
         for j in range(self.paramDim):
             for k in range(self.paramDim):
                 self.stack.append(self.Ur[j][k])
+                self.names.append('Ur%i_%i'%(j,k))
                 self.grads.append(self.dUr[j][k])
         for j in range(self.paramDim):
             for k in range(self.paramDim):
                 self.stack.append(self.Vr[j][k])
+                self.names.append('Vr%i_%i'%(j,k))
                 self.grads.append(self.dVr[j][k])
 
         self.stack.append(self.bf)
+        self.names.append('br')
         self.grads.append(self.dbf)
 
     def costAndGrad(self,mbdata,test=False):
@@ -239,21 +257,11 @@ class TLSTM:
             tot = self.forwardProp(tree.root,correct,guess)
             total += tot
             newmbdata.append((imgvec, tree.root.hActs2))
-        cost, error = self.topLayer.costAndGrad(newmbdata)
 
         if test:
-            return self.scale*cost, total
-
-        # Back prop each tree in minibatch
-        for n, (_, tree) in enumerate(mbdata):
-            cerror = error[n]
-            if not len(cerror.shape) > 1:
-                cerror = cerror[:, np.newaxis]
-            self.backProp(tree.root, cerror)
-
-        # scale cost and grad by mb size
-        for v in self.dL.itervalues():
-            v *=self.scale
+            cost = self.topLayer.costAndGrad(newmbdata, test=True)
+        else:
+            cost, error = self.topLayer.costAndGrad(newmbdata)
 
         # Add L2 Regularization
         cost += (self.rho/2)*np.sum(self.Wf**2)
@@ -276,6 +284,20 @@ class TLSTM:
             cost += (self.rho/2)*np.sum(self.Vi[j]**2)
             cost += (self.rho/2)*np.sum(self.Vo[j]**2)
             cost += (self.rho/2)*np.sum(self.Vu[j]**2)
+
+        if test:
+            return self.scale*cost, total
+
+         # Back prop each tree in minibatch
+        for n, (_, tree) in enumerate(mbdata):
+            cerror = error[n]
+            if not len(cerror.shape) > 1:
+                cerror = cerror[:, np.newaxis]
+            self.backProp(tree.root, cerror)
+
+        # scale cost and grad by mb size
+        for v in self.dL.itervalues():
+            v *=self.scale
 
         self.dWo *= self.scale
         self.dWo += self.Wo*self.rho
@@ -327,7 +349,7 @@ class TLSTM:
         self.dbu *= self.scale
         self.dbf *= self.scale
 
-        return cost
+        return cost, total
 
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0
