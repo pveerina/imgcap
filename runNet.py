@@ -23,6 +23,7 @@ if opts.data_type == 'both':
 # instantiate the data handler
 dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_size, opts.test_size, opts.data_type, opts.epoch_lim)
 
+dh.cur_iteration = 0
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 # instantiate the second 'layer'

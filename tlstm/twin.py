@@ -111,8 +111,6 @@ class Twin:
 			img_input_grad, sentence_input_grad = self.backwardProp( image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
 			img_input_grads.append(img_input_grad)
 			sentence_input_grads.append(sentence_input_grad)
-			import pdb
-			pdb.set_trace()
 
 		# remember to add in the L2-regularization for the parameters!
 		for n in range(len(self.img_grads)):
