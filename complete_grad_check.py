@@ -3,8 +3,8 @@ from __future__ import print_function
 # fact that both the first and second level networks store their stacks
 # by reference.
 
-#%load_ext autoreload
-#%autoreload 2
+%load_ext autoreload
+%autoreload 2
 
 import numpy as np
 from tlstm.datahandler import DataHandler
@@ -18,6 +18,7 @@ from copy import deepcopy
 
 
 test_mode = True
+net_to_test = '2'
 
 if test_mode:
     opts.wvecDim = 5
@@ -71,56 +72,95 @@ if test_mode:
     net1.L = net1.L[:,:opts.wvecDim] * mult_factor
     net1.stack[0] = net1.L
 
-stack = net1.stack + net2.stack
-names = net1.names + net2.names
+if net_to_test == '1':
+    stack = net1.stack
+    names = net1.names
+elif net_to_test == '2':
+    stack = net2.stack
+    names = net2.names
+else:
+    stack = net1.stack + net2.stack
+    names = net1.names + net2.names
 
 cost, _ = net1.costAndGrad(b)
 
-grads = deepcopy(net1.grads) + deepcopy(net2.grads)
+# # 'update' the parameters, just for testing
+# update = net2.grads
+# net2.updateParams(-1e-5, update)
+
+if net_to_test == '1':
+    grads = deepcopy(net1.grads)
+elif net_to_test == '2':
+    grads = deepcopy(net2.grads)
+else:
+    grads = deepcopy(net1.grads) + deepcopy(net2.grads)
+
 epsilon = 1e-5
 comp_grads = []
-# check L first
-L = net1.stack[0]
-dL = net1.grads[0]
-this_grad = collections.defaultdict(net1.defaultVec)
-print('Checking dL')
-cnt = 0
-for n,i in enumerate(dL.iterkeys()):
-    for j in xrange(L.shape[1]):
-        cnt+=1
-        if cnt == len(dL)*L.shape[1]:
-            print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]))
-        else:
-            print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]), end="\r")
-        sys.stdout.flush()
-        L[i,j] += epsilon / 2
-        costP, _ = net1.costAndGrad(b, test=True)
-        L[i,j] -= epsilon / 2
-        costN, _ = net1.costAndGrad(b, test=True)
-        this_grad[i][j] = (costP - costN) / epsilon
-        L[i,j] += epsilon / 2
-comp_grads.append(this_grad)
-
-for W, name in zip(stack[1:], names[1:]):
-    print('Checking d%s'%name)
+if net_to_test != '2':
+    # check L first
+    L = net1.stack[0]
+    dL = net1.grads[0]
+    this_grad = collections.defaultdict(net1.defaultVec)
+    print('Checking dL')
     cnt = 0
-    W = W[..., None]
-    this_grad = np.zeros_like(W)
-    for i in xrange(W.shape[0]):
-        for j in xrange(W.shape[1]):
-            cnt += 1
-            if cnt == W.size:
-                print('\tprog: %6i / %6i'%(cnt,W.size))
+    for n,i in enumerate(dL.iterkeys()):
+        for j in xrange(L.shape[1]):
+            cnt+=1
+            if cnt == len(dL)*L.shape[1]:
+                print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]))
             else:
-                print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
+                print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]), end="\r")
             sys.stdout.flush()
-            W[i,j] += epsilon / 2
+            L[i,j] += epsilon / 2
             costP, _ = net1.costAndGrad(b, test=True)
-            W[i,j] -= epsilon
+            L[i,j] -= epsilon / 2
             costN, _ = net1.costAndGrad(b, test=True)
-            this_grad[i,j] = (costP - costN) / epsilon
-            W[i,j] += epsilon / 2
+            this_grad[i][j] = (costP - costN) / epsilon
+            L[i,j] += epsilon / 2
     comp_grads.append(this_grad)
+
+    for W, name in zip(stack[1:], names[1:]):
+        print('Checking d%s'%name)
+        cnt = 0
+        W = W[..., None]
+        this_grad = np.zeros_like(W)
+        for i in xrange(W.shape[0]):
+            for j in xrange(W.shape[1]):
+                cnt += 1
+                if cnt == W.size:
+                    print('\tprog: %6i / %6i'%(cnt,W.size))
+                else:
+                    print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
+                sys.stdout.flush()
+                W[i,j] += epsilon / 2
+                costP, _ = net1.costAndGrad(b, test=True)
+                W[i,j] -= epsilon
+                costN, _ = net1.costAndGrad(b, test=True)
+                this_grad[i,j] = (costP - costN) / epsilon
+                W[i,j] += epsilon / 2
+        comp_grads.append(this_grad)
+else:
+    for W, name in zip(stack, names):
+        print('Checking d%s'%name)
+        cnt = 0
+        W = W[..., None]
+        this_grad = np.zeros_like(W)
+        for i in xrange(W.shape[0]):
+            for j in xrange(W.shape[1]):
+                cnt += 1
+                if cnt == W.size:
+                    print('\tprog: %6i / %6i'%(cnt,W.size))
+                else:
+                    print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
+                sys.stdout.flush()
+                W[i,j] += epsilon / 2
+                costP, _ = net1.costAndGrad(b, test=True)
+                W[i,j] -= epsilon
+                costN, _ = net1.costAndGrad(b, test=True)
+                this_grad[i,j] = (costP - costN) / epsilon
+                W[i,j] += epsilon / 2
+        comp_grads.append(this_grad)
 if not test_mode:
     np.savez('grad_checks/grads.npz',[np.array(grads[0].values())] + grads[1:])
     np.savez('grad_checks/comp_grads.npz',[np.array(comp_grads[0].values())] + comp_grads[1:])
