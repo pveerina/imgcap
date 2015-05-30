@@ -209,11 +209,14 @@ class TLSTM:
         cost, error = self.topLayer.costAndGrad(newmbdata)
 
         if test:
-            return (1./len(mbdata))*cost,correct, guess, total
+            return (1./len(mbdata))*cost, total
 
         # Back prop each tree in minibatch
-        for _, tree in mbdata:
-            self.backProp(tree.root, error)
+        for n, (_, tree) in enumerate(mbdata):
+            cerror = error[n]
+            if not len(cerror.shape) > 1:
+                cerror = cerror[:, np.newaxis]
+            self.backProp(tree.root, cerror)
 
         # scale cost and grad by mb size
         scale = (1./self.mbSize)
@@ -378,7 +381,6 @@ class TLSTM:
         return total + 1
 
     def backProp(self,node,error=None):
-
         # Clear nodes
         node.fprop = False
 

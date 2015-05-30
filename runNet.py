@@ -32,5 +32,9 @@ net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, opt
 net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, opts.rho, net2)
 
 mbdata = dh.nextBatch()
+batch_cnt = 0
 while mbdata != None:
+    batch_cnt += 1
+    print 'minibatch %i'%batch_cnt
     net1.costAndGrad(mbdata)
+    dh.nextBatch()
