@@ -19,7 +19,7 @@ def make_onehot(index, length):
 
 class TLSTM:
 
-    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30,rho=1e-4, topLayer):
+    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30,rho=1e-4, topLayer = None):
         self.wvecDim = wvecDim
         self.middleDim = middleDim
         self.paramDim = paramDim
@@ -28,6 +28,7 @@ class TLSTM:
         self.defaultVec = lambda : np.zeros((wvecDim,))
         self.rho = rho
         self.topLayer = topLayer
+        self.initParams()
 
     def initParams(self):
         np.random.seed(12341)
@@ -211,7 +212,7 @@ class TLSTM:
             return (1./len(mbdata))*cost,correct, guess, total
 
         # Back prop each tree in minibatch
-        for tree in mbdata:
+        for _, tree in mbdata:
             self.backProp(tree.root, error)
 
         # scale cost and grad by mb size

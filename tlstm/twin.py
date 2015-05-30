@@ -8,6 +8,7 @@ class Twin:
 		self.reg = reg
 		self.sharedDim = sharedDim
 		self.numLayers = numLayers
+		self.initParams()
 
 	def initParams(self):
 
@@ -32,18 +33,18 @@ class Twin:
 
 		# initialize sentence stuff
 		self.sent_params.append(0.1*np.random.randn(self.sharedDim, self.sentenceDim))
-		self.sent_grads.append(np.zeros(self.sharedDim, self.sentenceDim))
+		self.sent_grads.append(np.zeros((self.sharedDim, self.sentenceDim)))
 		self.sent_biases.append(yb())
 		self.sent_biasGrads.append(ybg())
 
 		# initialize image stuff
-		self.img_params.append(0.1*np.random.randn(self.sharedDim, self.simageDim))
-		self.img_grads.append(np.zeros(self.sharedDim, self.imageDim))
+		self.img_params.append(0.1*np.random.randn(self.sharedDim, self.imageDim))
+		self.img_grads.append(np.zeros((self.sharedDim, self.imageDim)))
 		self.img_biases.append(yb())
 		self.img_biasGrads.append(ybg())
 
 		# and for the remaining layers
-		for l in xrange(numLayers):
+		for l in xrange(self.numLayers):
 			self.sent_params.append(yW())
 			self.sent_grads.append(yWg())
 			self.sent_biases.append(yb())
@@ -67,7 +68,7 @@ class Twin:
 		batch_sentence_activations = []
 		self.clearGradients()
 
-		for i, imageVec, sentenceVec in enumerate(mbdata):
+		for i, (imageVec, sentenceVec) in enumerate(mbdata):
 			image_activations = self.forwardPropImage(imageVec)
 			sentence_activations = self.forwardPropSentence(sentenceVec)
 			batch_image_activations.append(image_activations)
@@ -79,12 +80,12 @@ class Twin:
 
 		# compute cost
 		for i, (image_activations, sentence_activations) in enumerate(zip(batch_image_activations, batch_sentence_activations)):
-			fimg_act = image_activations[-1]
+			img_act = image_activations[-1]
 			sent_act = sentence_activations[-1]
 			correct_pair_cost = img_act.dot(sent_act)
 
-			image_deltas.append(np.zeros_like(imageVec))
-			sentence_deltas.append(np.zeros_like(sentenceVec))
+			image_deltas.append(np.zeros_like(img_act))
+			sentence_deltas.append(np.zeros_like(sent_act))
 
 			for j in range(len(batch_image_activations)):
 				if j != i:
@@ -96,29 +97,29 @@ class Twin:
 					sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
 					cost += s1 + s2
 			# add in L2-regularization
-			cost += self.reg * .5 * (np.sum([x**2 for x in self.sent_params]) + np.sum([x**2 for x in self.img_params]))
+			cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
 
 		img_input_grads = []
 		sentence_input_grads = []
 		voi = zip(range(len(image_deltas)), batch_image_activations, batch_sentence_activations)
 		for i, image_activations, sentence_activations in voi:
-			img_input_grad, sentence_input_grad = self.backwardProp(self, image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
-			img_input_grads.append(image_input_grad)
+			img_input_grad, sentence_input_grad = self.backwardProp( image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
+			img_input_grads.append(img_input_grad)
 			sentence_input_grads.append(sentence_input_grad)
 
 		# remember to add in the L2-regularization for the parameters!
 		for n in range(len(self.img_grads)):
-			self.img_grads[i] += self.reg * self.img_params[i]
-			self.sent_grads[i] += self.reg * self.sent_params[i]
+			self.img_grads[n] += self.reg * self.img_params[n]
+			self.sent_grads[n] += self.reg * self.sent_params[n]
 
 		self.grads = {"img_grads": self.img_grads, \
-				 "sent_grads": self.sent_grads
+				 "sent_grads": self.sent_grads, \
 				 "img_biasGrads": self.img_biasGrads, \
 				 "sent_biasGrads": self.sent_biasGrads}
 		return cost, sentence_input_grads
 
 	def forwardPropImage(self, imageVec):
-		return self.forwardProp(sentVec, self.img_params, self.img_biases)
+		return self.forwardProp(imageVec, self.img_params, self.img_biases)
 
 	def forwardPropSentence(self, sentVec):
 		return self.forwardProp(sentVec, self.sent_params, self.sent_biases)
@@ -126,7 +127,7 @@ class Twin:
 	def forwardProp(self, h, Ws, bs):
 		activations = [h]
 		for i, W in enumerate(Ws):
-			h = np.max(W.dot(h) + bs[i], 0)
+			h = np.maximum(W.dot(h).squeeze() + bs[i], 0)
 			activations.append(h)
 		return activations
 
@@ -140,27 +141,27 @@ class Twin:
 		delta = image_delta_top
 		h = image_activations
 		for layer in idx:
-			delta *= h[i+1] > 0
-			self.img_grads[i] += delta.dot(h[i])
-			self.img_biasGrads[i] += delta
-			delta = delta.dot(self.img_params[i])
+			delta *= h[layer+1] > 0
+			self.img_grads[layer] += np.outer(delta, h[layer])
+			self.img_biasGrads[layer] += delta
+			delta = delta.dot(self.img_params[layer])
 			if layer == 0:
 				# then return the error for the t-lstm
 				image_input_grad = delta
 
 		# now perform the same thing for sentences
-		delta = sent_delta_top
-		h = sent_activations
+		delta = sentence_delta_top
+		h = sentence_activations
 		for layer in idx:
-			delta *= h[i+1] > 0
-			self.sent_grads[i] += delta.dot(h[i])
-			self.sent_biasGrads[i] += delta
-			delta = delta.dot(self.img_params[i])
+			delta *= h[layer+1] > 0
+			self.sent_grads[layer] += np.outer(delta, h[layer])
+			self.sent_biasGrads[layer] += delta
+			delta = delta.dot(self.sent_params[layer])
 			if layer == 0:
 				# then return the error for the t-lstm
-				image_input_grad = delta
+				sent_input_grad = delta
 
-		return image_input_grad, sentence_input_grad
+		return image_input_grad, sent_input_grad
 
 
 	def updateParams(self, scale, update):

@@ -29,7 +29,7 @@
 
 import os
 import numpy as np
-from tlstm.trees import Tree
+from trees import Tree
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
@@ -156,7 +156,7 @@ class DataHandler():
                 img_dat[i] = vgg19[imidx,:]
             tree_dat[i] = []
             for curtreeIDX in self.data_dict[i]['desc_idx']:
-                tree_dat[i].append(Tree(trees[curtreeIDX]))
+                tree_dat[i].append(Tree(self.trees[curtreeIDX]))
             # shuffle the trees
             np.random.shuffle(tree_dat[i])
         print 'Constructing schedule for this megabatch'
