@@ -14,9 +14,10 @@ import cPickle as pickle
 import conf_gradcheck as opts
 import collections
 import sys
+from copy import deepcopy
 
 
-test_mode = False
+test_mode = True
 
 if test_mode:
     opts.wvecDim = 5
@@ -65,7 +66,7 @@ names = net1.names + net2.names
 
 cost, _ = net1.costAndGrad(b)
 
-grads = net1.grads + net2.grads
+grads = deepcopy(net1.grads) + deepcopy(net2.grads)
 epsilon = 1e-4
 comp_grads = []
 # check L first
@@ -105,10 +106,28 @@ for W, name in zip(stack[1:], names[1:]):
             sys.stdout.flush()
             W[i,j] += epsilon / 2
             costP, _ = net1.costAndGrad(b, test=True)
-            W[i,j] -= epsilon / 2
+            W[i,j] -= epsilon
             costN, _ = net1.costAndGrad(b, test=True)
             this_grad[i,j] = (costP - costN) / epsilon
             W[i,j] += epsilon / 2
     comp_grads.append(this_grad)
-np.savez('grad_checks/grads.npz',[np.array(grads[0].values())] + grads[1:])
-np.savez('grad_checks/comp_grads.npz',[np.array(comp_grads[0].values())] + comp_grads[1:])
+if not test_mode:
+    np.savez('grad_checks/grads.npz',[np.array(grads[0].values())] + grads[1:])
+    np.savez('grad_checks/comp_grads.npz',[np.array(comp_grads[0].values())] + comp_grads[1:])
+
+gradD = dict()
+for i,j,k in zip(names, grads, comp_grads):
+    gradD[i] = [j,k]
+
+for k in sorted(gradD.keys()):
+    try:
+        a, b = gradD[k]
+        error = a.flatten().reshape(-1) / b.flatten().reshape(-1)
+        error = np.nanmean(error)
+        print('%s : %.4f [%s]'%(k, error, a.shape))
+    except:
+        a = np.array(gradD[k][0].values())
+        b = np.array(gradD[k][0].values())
+        error = a.flatten().reshape(-1) / b.flatten().reshape(-1)
+        error = np.nanmean(error)
+        print('%s : %.4f [%s]'%(k, error, str(a.shape())))
