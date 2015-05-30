@@ -1,0 +1,48 @@
+\documentclass{article}[12pt]
+\usepackage{color}
+\usepackage[normalem]{ulem}
+\usepackage{times}
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[english]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{dsfont}
+\usepackage{verbatim}
+
+%\usepackage{tabularx,booktabs}
+%\newcolumntype{Z}[0]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}X}%
+%\renewcommand\tabularxcolumn[1]{m{#1}}
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % "top" strut
+\newcommand\Bstrut{\rule[-0.9ex]{0pt}{0pt}} % "bottom" strut
+\newcommand{\TBstrut}{\Tstrut\Bstrut} % top&bottom struts
+
+\def \R {\mathbb R}
+\def \imp {\Longrightarrow}
+\def \eps {\varepsilon}
+\def \Inf {{\sf Inf}}
+\newenvironment{proof}{{\bf Proof.  }}{\hfill$\Box$}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{claim}{Claim}[section]
+\setlength {\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\title{CS224D Homework 1 \\ Complimentary Problemset}
+
+\author{Nicholas Dufour \\\ ndufour@stanford.edu}
+
+
+\begin{document}
+$$s_{1,i} = \sum_{j \not= i}\max(0, \Delta - x_i y_i + x_i y_j)$$
+$$s_{2,i} = \sum_{j \not= i}\max(0, \Delta - x_i y_i + x_j y_i)$$
+$$J(\theta)_i = s_{1,i} + s_{2,i}$$
+$$\frac{\partial J(\theta)}{\partial x_i} = \sum_{j \not=i} (y_j-y_i) (s_{1,i} > 0) - \sum_{j \not= i} (y_i) (s_{2,i} > 0) + \sum_{j\not= i} y_j (s_{2,j}>0)$$
+$$\frac{\partial J(\theta)}{\partial y_i} = \sum_{j \not= i} (x_j-x_i) (s_{2,i} > 0)  - \sum_{j \not=i} (x_i) (s_{1,i} > 0) + \sum_{j\not= i} x_j (s_{1,j}>0)$$
+\end{document}

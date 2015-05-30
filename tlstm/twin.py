@@ -82,7 +82,7 @@ class Twin:
 
 		# compute cost
 		ys = [x[-1] for x in batch_image_activations]
-		xs = [x[-1] for x in batch_sent_activations]
+		xs = [x[-1] for x in batch_sentence_activations]
 		s1 = []
 		s2 = []
 		# cy, cx = correct y, x
@@ -93,7 +93,7 @@ class Twin:
 			cpair = cx.dot(cy)
 			for j, (iy, ix) in enumerate(zip(ys, xs)):
 				if i != j:
-					cpair = cx.dot
+					cpair = cx.dot(cy)
 					c1s.append(max(0, 1 - cpair + cx.dot(iy)))
 					c2s.append(max(0, 1 - cpair + ix.dot(cy)))
 			s1.append(c1s)
