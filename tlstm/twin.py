@@ -111,27 +111,7 @@ class Twin:
 					c_id += (ix - cx)*(s2[i]>0) - cx*(s1[i]>0) + ix * (s1[j]>0)
 			image_deltas.append(c_id)
 			sentence_deltas.append(c_sd)
-		# # this cost function is incorrect!
-		# for i, (image_activations, sentence_activations) in enumerate(zip(batch_image_activations, batch_sentence_activations)):
-		# 	img_act = image_activations[-1]
-		# 	sent_act = sentence_activations[-1]
-		# 	correct_pair_cost = img_act.dot(sent_act)
 
-		# 	image_deltas.append(np.zeros_like(img_act))
-		# 	sentence_deltas.append(np.zeros_like(sent_act))
-		# 	for j in range(len(batch_image_activations)):
-		# 		if j != i:
-		# 			contrast_image_act = batch_image_activations[j][-1]
-		# 			contrast_sent_act = batch_sentence_activations[j][-1]
-		# 			s1 = max(0, 1 - correct_pair_cost + img_act.dot(contrast_sent_act))
-		# 			s2 = max(0, 1 - correct_pair_cost + contrast_image_act.dot(sent_act))
-		# 			image_deltas[i] -=  (sent_act * (s1 > 0))  + (sent_act + contrast_sent_act) * (s2 >0)
-		# 			sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
-		# 			cost += s1 + s2
-
-		# cost *= self.scale
-		# # add in L2-regularization
-		# cost += self.reg * .5 * (np.sum([np.sum(x**2) for x in self.sent_params]) + np.sum([np.sum(x**2) for x in self.img_params]))
 		if test:
 			return cost
 

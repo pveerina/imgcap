@@ -1,6 +1,7 @@
 import numpy as np
 import collections
 import pdb
+import os
 np.seterr(under='warn')
 
 # This is a Tree-structured LSTM
@@ -19,7 +20,7 @@ def make_onehot(index, length):
 
 class TLSTM:
 
-    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None):
+    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None, root=None):
         self.wvecDim = wvecDim
         self.middleDim = middleDim
         self.paramDim = paramDim
@@ -29,13 +30,15 @@ class TLSTM:
         self.defaultVec = lambda : np.zeros((wvecDim,))
         self.rho = rho
         self.topLayer = topLayer
+        self.root = root
         self.initParams()
 
     def initParams(self):
-        np.random.seed(12341)
+        # MAKE SURE THEY READ IN
 
         # Word vectors
-        self.L = 0.01*np.random.randn(self.wvecDim,self.numWords)
+        #self.L = 0.01*np.random.randn(self.wvecDim,self.numWords)
+        self.L = os.path.join(self.root, 'data','trees','Lmat.npy')
 
         # Bias Terms
         self.bf = np.zeros((self.middleDim))
@@ -329,7 +332,7 @@ class TLSTM:
     def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0
         # this is exactly the same setup as forwardProp in rnn.py
-        x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
+        x = np.reshape(self.L[node.word,:], (self.wvecDim, 1))
         if node.isLeaf:
             self.i = sigmoid(np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1)))
             self.o = sigmoid(np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1)))
@@ -512,7 +515,7 @@ class TLSTM:
             error_out.append(out_cc)
         # Parameter Gradients
         if not node.isLeaf:
-            x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
+            x = np.reshape(self.L[node.word,:], (self.wvecDim, 1))
             # Bias
             self.dbo += dJ_dso.flatten()
             self.dbi += dJ_dsi.flatten()
@@ -558,7 +561,7 @@ class TLSTM:
             for j in node.right:
                 self.backProp(j, error_out)
         else:
-            x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
+            x = np.reshape(self.L[node.word,:], (self.wvecDim, 1))
             dJ_dso = np.dot(dh_dso, error_at_h)
             dJ_dsi = np.dot(dc_dsi, error_at_c)
             dJ_dsu = np.dot(dc_dsu, error_at_c)
@@ -591,7 +594,7 @@ class TLSTM:
         # handle dictionary update sparsely
         dL = update[0]
         for j in dL.iterkeys():
-            self.L[:,j] += scale*dL[j]
+            self.L[j,:] += scale*dL[j]
 
     def toFile(self):
         return self.stack

@@ -27,12 +27,16 @@ dh.cur_iteration = 0
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 # instantiate the second 'layer'
-net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg)
+net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
+#net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
 
 # instantiate the first 'layer'
-net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), opts.rho, net2)
+net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
+
+#net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2)
 
 # instantiate the SGD
 sgd = optimizer.SGD(net1, opts.alpha, dh, optimizer='sgd')
+#sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
 
 sgd.run()
