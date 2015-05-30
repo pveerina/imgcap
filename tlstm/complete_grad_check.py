@@ -58,7 +58,7 @@ this_grad = collections.defaultdict(net1.defaultVec)
 print('Checking dL')
 for n,i in enumerate(dL.iterkeys()):
     for j in xrange(L.shape[1]):
-        print('\tprog: %04i-%04i / %04i-%04i'%(n,j,len(dL),L.shape[1]), end="\r")
+        print('\tprog: %4i-%4i / %4i-%4i'%(n,j,len(dL),L.shape[1]), end="\r")
         sys.stdout.flush()
         L[i,j] += epsilon / 2
         costP, _ = net1.costAndGrad(b, test=True)
@@ -74,7 +74,7 @@ for W, name in zip(stack[1:], names[1:]):
     this_grad = np.zeros_like(W)
     for i in xrange(W.shape[0]):
         for j in xrange(W.shape[1]):
-            print('\tprog: %04i-%04i / %04i-%04i'%(i,j,W.shape[0],W.shape[1]), end="\r")
+            print('\tprog: %4i-%4i / %4i-%4i'%(i,j,W.shape[0],W.shape[1]), end="\r")
             sys.stdout.flush()
             W[i,j] += epsilon / 2
             costP, _ = net1.costAndGrad(b, test=True)
