@@ -111,11 +111,11 @@ class Twin:
 			self.img_grads[i] += self.reg * self.img_params[i]
 			self.sent_grads[i] += self.reg * self.sent_params[i]
 
-		grads = {"img_grads": self.img_grads, \
+		self.grads = {"img_grads": self.img_grads, \
 				 "sent_grads": self.sent_grads
 				 "img_biasGrads": self.img_biasGrads, \
 				 "sent_biasGrads": self.sent_biasGrads}
-		return cost, img_input_grads, sentence_input_grads, grads
+		return cost, sentence_input_grads
 
 	def forwardPropImage(self, imageVec):
 		return self.forwardProp(sentVec, self.img_params, self.img_biases)
