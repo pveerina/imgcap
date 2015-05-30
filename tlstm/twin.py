@@ -95,6 +95,8 @@ class Twin:
 					image_deltas[i] -=  (sent_act * (s1 > 0))  + (sent_act + contrast_sent_act) * (s2 >0)
 					sentence_deltas[i] -= (img_act * (s1 > 0)) + (img_act + contrast_image_act) * (s2>0)
 					cost += s1 + s2
+			# add in L2-regularization
+			cost += self.reg * .5 * (np.sum([x**2 for x in self.sent_params]) + np.sum([x**2 for x in self.img_params]))
 
 		img_input_grads = []
 		sentence_input_grads = []
@@ -103,6 +105,11 @@ class Twin:
 			img_input_grad, sentence_input_grad = self.backwardProp(self, image_deltas[i], sentence_deltas[i], image_activations, sentence_activations)
 			img_input_grads.append(image_input_grad)
 			sentence_input_grads.append(sentence_input_grad)
+
+		# remember to add in the L2-regularization for the parameters!
+		for n in range(len(self.img_grads)):
+			self.img_grads[i] += self.reg * self.img_params[i]
+			self.sent_grads[i] += self.reg * self.sent_params[i]
 
 		grads = {"img_grads": self.img_grads, \
 				 "sent_grads": self.sent_grads

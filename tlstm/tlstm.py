@@ -64,38 +64,38 @@ class TLSTM:
 
         self.stack.append(self.Wo)
         for j in range(self.paramDim):
-                self.stack.append(self.Uo[j])
+            self.stack.append(self.Uo[j])
         for j in range(self.paramDim):
-                self.stack.append(self.Vo[j])
+            self.stack.append(self.Vo[j])
         self.stack.append(self.bo)
 
         self.stack.append(self.Wi)
         for j in range(self.paramDim):
-                self.stack.append(self.Ui[j])
+            self.stack.append(self.Ui[j])
         for j in range(self.paramDim):
-                self.stack.append(self.Vi[j])
+            self.stack.append(self.Vi[j])
         self.stack.append(self.bi)
 
         self.stack.append(self.Wu)
         for j in range(self.paramDim):
-                self.stack.append(self.Uu[j])
+            self.stack.append(self.Uu[j])
         for j in range(self.paramDim):
-                self.stack.append(self.Vu[j])
+            self.stack.append(self.Vu[j])
         self.stack.append(self.bu)
 
         self.stack.append(self.Wf)
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.stack.append(self.Ul[j][k])
+            for k in range(self.paramDim):
+                self.stack.append(self.Ul[j][k])
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.stack.append(self.Vl[j][k])
+            for k in range(self.paramDim):
+                self.stack.append(self.Vl[j][k])
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.stack.append(self.Ur[j][k])
+            for k in range(self.paramDim):
+                self.stack.append(self.Ur[j][k])
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.stack.append(self.Vr[j][k])
+            for k in range(self.paramDim):
+                self.stack.append(self.Vr[j][k])
         self.stack.append(self.bf)
 
         # Gradients
@@ -178,20 +178,20 @@ class TLSTM:
         self.dWf[:] = 0
 
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.dUl[j][k][:] = 0
-                        self.dUr[j][k][:] = 0
-                self.dUi[j][:] = 0
-                self.dUo[j][:] = 0
-                self.dUu[j][:] = 0
+            for k in range(self.paramDim):
+                self.dUl[j][k][:] = 0
+                self.dUr[j][k][:] = 0
+            self.dUi[j][:] = 0
+            self.dUo[j][:] = 0
+            self.dUu[j][:] = 0
 
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        self.dVl[j][k][:] = 0
-                        self.dVr[j][k][:] = 0
-                self.dVi[j][:] = 0
-                self.dVo[j][:] = 0
-                self.dVu[j][:] = 0
+            for k in range(self.paramDim):
+                self.dVl[j][k][:] = 0
+                self.dVr[j][k][:] = 0
+            self.dVi[j][:] = 0
+            self.dVo[j][:] = 0
+            self.dVu[j][:] = 0
 
         self.dL = collections.defaultdict(self.defaultVec)
 
@@ -220,57 +220,57 @@ class TLSTM:
         cost += (self.rho/2)*np.sum(self.Wu**2)
 
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        cost += (self.rho/2)*np.sum(self.Ul[j][k]**2)
-                        cost += (self.rho/2)*np.sum(self.Ur[j][k]**2)
-                cost += (self.rho/2)*np.sum(self.Ui[j]**2)
-                cost += (self.rho/2)*np.sum(self.Uo[j]**2)
-                cost += (self.rho/2)*np.sum(self.Uu[j]**2)
+            for k in range(self.paramDim):
+                cost += (self.rho/2)*np.sum(self.Ul[j][k]**2)
+                cost += (self.rho/2)*np.sum(self.Ur[j][k]**2)
+            cost += (self.rho/2)*np.sum(self.Ui[j]**2)
+            cost += (self.rho/2)*np.sum(self.Uo[j]**2)
+            cost += (self.rho/2)*np.sum(self.Uu[j]**2)
 
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        cost += (self.rho/2)*np.sum(self.Vl[j][k]**2)
-                        cost += (self.rho/2)*np.sum(self.Vr[j][k]**2)
-                cost += (self.rho/2)*np.sum(self.Vi[j]**2)
-                cost += (self.rho/2)*np.sum(self.Vo[j]**2)
-                cost += (self.rho/2)*np.sum(self.Vu[j]**2)
+            for k in range(self.paramDim):
+                cost += (self.rho/2)*np.sum(self.Vl[j][k]**2)
+                cost += (self.rho/2)*np.sum(self.Vr[j][k]**2)
+            cost += (self.rho/2)*np.sum(self.Vi[j]**2)
+            cost += (self.rho/2)*np.sum(self.Vo[j]**2)
+            cost += (self.rho/2)*np.sum(self.Vu[j]**2)
 
         grad_stack = [self.dL]
 
         grad_stack.append(scale*(self.dWo + self.Wo*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dUo[j] + self.Uo[j]*self.rho))
+            grad_stack.append(scale*(self.dUo[j] + self.Uo[j]*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dVo[j] + self.Vo[j]*self.rho))
+            grad_stack.append(scale*(self.dVo[j] + self.Vo[j]*self.rho))
         grad_stack.append(scale*self.dbo)
 
         grad_stack.append(scale*(self.dWi + self.Wi*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dUi[j] + self.Ui[j]*self.rho))
+            grad_stack.append(scale*(self.dUi[j] + self.Ui[j]*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dVi[j] + self.Vi[j]*self.rho))
+            grad_stack.append(scale*(self.dVi[j] + self.Vi[j]*self.rho))
         grad_stack.append(scale*self.dbi)
 
         grad_stack.append(scale*(self.dWu + self.Wu*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dUu[j] + self.Uu[j]*self.rho))
+            grad_stack.append(scale*(self.dUu[j] + self.Uu[j]*self.rho))
         for j in range(self.paramDim):
-                grad_stack.append(scale*(self.dVu[j] + self.Vu[j]*self.rho))
+            grad_stack.append(scale*(self.dVu[j] + self.Vu[j]*self.rho))
         grad_stack.append(scale*self.dbu)
 
         grad_stack.append(scale*(self.dWf + self.Wf*self.rho))
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        grad_stack.append(scale*(self.dUl[j][k] + self.Ul[j][k]*self.rho))
+            for k in range(self.paramDim):
+                grad_stack.append(scale*(self.dUl[j][k] + self.Ul[j][k]*self.rho))
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        grad_stack.append(scale*(self.dVl[j][k] + self.Vl[j][k]*self.rho))
+            for k in range(self.paramDim):
+                grad_stack.append(scale*(self.dVl[j][k] + self.Vl[j][k]*self.rho))
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        grad_stack.append(scale*(self.dUr[j][k] + self.Ur[j][k]*self.rho))
+            for k in range(self.paramDim):
+                grad_stack.append(scale*(self.dUr[j][k] + self.Ur[j][k]*self.rho))
         for j in range(self.paramDim):
-                for k in range(self.paramDim):
-                        grad_stack.append(scale*(self.dVr[j][k] + self.Vr[j][k]*self.rho))
+            for k in range(self.paramDim):
+                grad_stack.append(scale*(self.dVr[j][k] + self.Vr[j][k]*self.rho))
         grad_stack.append(scale*self.dbf)
 
         return scale*cost, grad_stack
@@ -280,95 +280,84 @@ class TLSTM:
         # this is exactly the same setup as forwardProp in rnn.py
         x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
         if node.isLeaf:
-                self.i = sigmoid(np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1)))
-                self.o = sigmoid(np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1)))
-                self.u = np.tanh(np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1)))
-                node.hActs1 = np.multiply(self.i, self.u)
+            self.i = sigmoid(np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1)))
+            self.o = sigmoid(np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1)))
+            self.u = np.tanh(np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1)))
+            node.hActs1 = np.multiply(self.i, self.u)
         else:
-                #cost_left = 0
-                #total_left = 0
-                for j in node.left:
-                        self.forwardProp(j, correct, guess)
-                        #cost_temp, total_temp = self.forwardProp(j, correct, guess)
-                        #cost_left += cost_temp
-                        #total_left += total_temp
-                #cost_right = 0
-                #total_right = 0
-                for j in node.right:
-                        self.forwardProp(j, correct, guess)
-                        #cost_temp, total_temp = self.forwardProp(j, correct, guess)
-                        #cost_right += cost_temp
-                        #total_right += total_temp
+            for j in node.left:
+                self.forwardProp(j, correct, guess)
+            for j in node.right:
+                self.forwardProp(j, correct, guess)
+            si = np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1))
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                si += np.dot(self.Ui[idx], j.hActs2)
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                si += np.dot(self.Vi[idx], j.hActs2)
+            self.i = sigmoid(si)
 
-                si = np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1))
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        si += np.dot(self.Ui[idx], j.hActs2)
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        si += np.dot(self.Vi[idx], j.hActs2)
-                self.i = sigmoid(si)
+            su = np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1))
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                su += np.dot(self.Uu[idx], j.hActs2)
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                su += np.dot(self.Vu[idx], j.hActs2)
+            self.u = np.tanh(su)
 
-                su = np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1))
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        su += np.dot(self.Uu[idx], j.hActs2)
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        su += np.dot(self.Vu[idx], j.hActs2)
-                self.u = np.tanh(su)
+            so = np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1))
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                so += np.dot(self.Uo[idx], j.hActs2)
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                so += np.dot(self.Vo[idx], j.hActs2)
+            self.o = sigmoid(so)
 
-                so = np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1))
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        so += np.dot(self.Uo[idx], j.hActs2)
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        so += np.dot(self.Vo[idx], j.hActs2)
-                self.o = sigmoid(so)
+            self.l = []
+            sl = []
+            for j in range(self.paramDim):
+                self.l.append(np.zeros((self.middleDim, 1)))
+                sl.append(np.zeros((self.middleDim, 1)))
+            temp = np.dot(self.Wf, x) + np.reshape(self.bf, (self.middleDim, 1))
+            for j in range(self.paramDim):
+                idx1 = j
+                sl[idx1] += temp
+                for k in node.left:
+                    idx2 = min(k.idx, self.paramDim-1)
+                    sl[idx1] += np.dot(self.Ul[idx1][idx2], k.hActs2)
+                for k in node.right:
+                    idx2 = min(k.idx, self.paramDim-1)
+                    sl[idx1] += np.dot(self.Vl[idx1][idx2], k.hActs2)
+            for j in range(self.paramDim):
+                self.l[j] = sigmoid(sl[j])
 
-                self.l = []
-                sl = []
-                for j in range(self.paramDim):
-                        self.l.append(np.zeros((self.middleDim, 1)))
-                        sl.append(np.zeros((self.middleDim, 1)))
-                temp = np.dot(self.Wf, x) + np.reshape(self.bf, (self.middleDim, 1))
-                for j in range(self.paramDim):
-                        idx1 = j
-                        sl[idx1] += temp
-                        for k in node.left:
-                                idx2 = min(k.idx, self.paramDim-1)
-                                sl[idx1] += np.dot(self.Ul[idx1][idx2], k.hActs2)
-                        for k in node.right:
-                                idx2 = min(k.idx, self.paramDim-1)
-                                sl[idx1] += np.dot(self.Vl[idx1][idx2], k.hActs2)
-                for j in range(self.paramDim):
-                        self.l[j] = sigmoid(sl[j])
+            self.r = []
+            sr = []
+            for j in range(self.paramDim):
+                self.r.append(np.zeros((self.middleDim, 1)))
+                sr.append(np.zeros((self.middleDim, 1)))
+            for j in range(self.paramDim):
+                idx1 = j
+                sl[idx1] += temp
+                for k in node.left:
+                    idx2 = min(k.idx, self.paramDim-1)
+                    sr[idx1] += np.dot(self.Ur[idx1][idx2], k.hActs2)
+                for k in node.right:
+                    idx2 = min(k.idx, self.paramDim-1)
+                    sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2)
+            for j in range(self.paramDim):
+                self.r[j] = sigmoid(sr[j])
 
-                self.r = []
-                sr = []
-                for j in range(self.paramDim):
-                        self.r.append(np.zeros((self.middleDim, 1)))
-                        sr.append(np.zeros((self.middleDim, 1)))
-                for j in range(self.paramDim):
-                        idx1 = j
-                        sl[idx1] += temp
-                        for k in node.left:
-                                idx2 = min(k.idx, self.paramDim-1)
-                                sr[idx1] += np.dot(self.Ur[idx1][idx2], k.hActs2)
-                        for k in node.right:
-                                idx2 = min(k.idx, self.paramDim-1)
-                                sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2)
-                for j in range(self.paramDim):
-                        self.r[j] = sigmoid(sr[j])
-
-                node.hActs1 = np.multiply(self.i, self.u)
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        node.hActs1 += np.multiply(self.l[idx], j.hActs1)
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        node.hActs1 += np.multiply(self.r[idx], j.hActs1)
+            node.hActs1 = np.multiply(self.i, self.u)
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                node.hActs1 += np.multiply(self.l[idx], j.hActs1)
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                node.hActs1 += np.multiply(self.r[idx], j.hActs1)
         node.hActs2 = np.multiply(self.o, np.tanh(node.hActs1))
         #node.probs = softmax(node.hActs2.flatten())
         #guess.append(np.argmax(node.probs))
@@ -402,27 +391,27 @@ class TLSTM:
         error_at_c = np.zeros((self.middleDim, 1))
         # Inherited error
         if node.parent == None:
-                error_at_h = error
-                error_at_c = np.dot(dh_dc, error_at_h)
+            error_at_h = error
+            error_at_c = np.dot(dh_dc, error_at_h)
         if node.parent != None:
-                [in_ho, in_hi, in_hu] = error[0:3]
-                in_hl = error[3:3+self.paramDim]
-                in_hr = error[3+self.paramDim:3+2*self.paramDim]
-                in_cc = error[3+2*self.paramDim]
-                if node == node.parent.left:
-                        idx = min(node.idx, self.paramDim-1)
-                        error_at_h += np.dot(self.Uo[idx].T, in_ho) + np.dot(self.Ui[idx].T, in_hi) + np.dot(self.Uu[idx].T, in_hu)
-                        for j in range(self.paramDim):
-                                error_at_h += np.dot(self.Ul[j][idx].T, in_hl[j])
-                                error_at_h += np.dot(self.Ur[j][idx].T, in_hr[j])
-                        error_at_c += np.dot(np.diag(self.l[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
-                if node == node.parent.right:
-                        idx = min(node.idx, self.paramDim-1)
-                        error_at_h += np.dot(self.Vo[idx].T, in_ho) + np.dot(self.Vi[idx].T, in_hi) + np.dot(self.Vu[idx].T, in_hu)
-                        for j in range(self.paramDim):
-                                error_at_h += np.dot(self.Vl[j][idx].T, in_hl[j])
-                                error_at_h += np.dot(self.Vr[j][idx].T, in_hr[j])
-                        error_at_c += np.dot(np.diag(self.r[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
+            [in_ho, in_hi, in_hu] = error[0:3]
+            in_hl = error[3:3+self.paramDim]
+            in_hr = error[3+self.paramDim:3+2*self.paramDim]
+            in_cc = error[3+2*self.paramDim]
+            if node == node.parent.left:
+                idx = min(node.idx, self.paramDim-1)
+                error_at_h += np.dot(self.Uo[idx].T, in_ho) + np.dot(self.Ui[idx].T, in_hi) + np.dot(self.Uu[idx].T, in_hu)
+                for j in range(self.paramDim):
+                    error_at_h += np.dot(self.Ul[j][idx].T, in_hl[j])
+                    error_at_h += np.dot(self.Ur[j][idx].T, in_hr[j])
+                error_at_c += np.dot(np.diag(self.l[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
+            if node == node.parent.right:
+                idx = min(node.idx, self.paramDim-1)
+                error_at_h += np.dot(self.Vo[idx].T, in_ho) + np.dot(self.Vi[idx].T, in_hi) + np.dot(self.Vu[idx].T, in_hu)
+                for j in range(self.paramDim):
+                    error_at_h += np.dot(self.Vl[j][idx].T, in_hl[j])
+                    error_at_h += np.dot(self.Vr[j][idx].T, in_hr[j])
+                error_at_c += np.dot(np.diag(self.r[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
         # Error passed to children
         # o
         do_dso = np.diag(np.multiply(self.o, 1-self.o).flatten())
@@ -434,106 +423,105 @@ class TLSTM:
         du_dsu = np.diag((1-self.u**2).flatten())
         dc_dsu = np.dot(du_dsu, np.diag(self.i.flatten()))
         if not node.isLeaf:
+            # l
+            dl_dsl = []
+            dc_dsl = []
+            for j in range(self.paramDim):
+                dc_dsl.append(np.zeros((self.middleDim, self.middleDim)))
+            for j in range(self.paramDim):
+                dl_dsl.append(np.diag(np.multiply(self.l[j], 1-self.l[j]).flatten()))
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                dc_dsl[idx] += np.dot(dl_dsl[idx], np.diag(j.hActs1.flatten()))
+            # r
+            dr_dsr = []
+            dc_dsr = []
+            for j in range(self.paramDim):
+                dc_dsr.append(np.zeros((self.middleDim, self.middleDim)))
+            for j in range(self.paramDim):
+                dr_dsr.append(np.diag(np.multiply(self.r[j], 1-self.r[j]).flatten()))
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                dc_dsr[idx] += np.dot(dr_dsr[idx], np.diag(j.hActs1.flatten()))
 
-                # l
-                dl_dsl = []
-                dc_dsl = []
-                for j in range(self.paramDim):
-                        dc_dsl.append(np.zeros((self.middleDim, self.middleDim)))
-                for j in range(self.paramDim):
-                        dl_dsl.append(np.diag(np.multiply(self.l[j], 1-self.l[j]).flatten()))
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        dc_dsl[idx] += np.dot(dl_dsl[idx], np.diag(j.hActs1.flatten()))
-                # r
-                dr_dsr = []
-                dc_dsr = []
-                for j in range(self.paramDim):
-                        dc_dsr.append(np.zeros((self.middleDim, self.middleDim)))
-                for j in range(self.paramDim):
-                        dr_dsr.append(np.diag(np.multiply(self.r[j], 1-self.r[j]).flatten()))
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        dc_dsr[idx] += np.dot(dr_dsr[idx], np.diag(j.hActs1.flatten()))
-
-                # Error out
-                dJ_dso = np.dot(dh_dso, error_at_h)
-                dJ_dsi = np.dot(dc_dsi, error_at_c)
-                dJ_dsu = np.dot(dc_dsu, error_at_c)
-                dJ_dsl = []
-                dJ_dsr = []
-                for j in range(self.paramDim):
-                        dJ_dsl.append(np.dot(dc_dsl[j], error_at_c))
-                        dJ_dsr.append(np.dot(dc_dsr[j], error_at_c))
-                out_cc = error_at_c
-                error_out = [dJ_dso, dJ_dsi, dJ_dsu]
-                for j in range(self.paramDim):
-                        error_out.append(dJ_dsl[j])
-                for j in range(self.paramDim):
-                        error_out.append(dJ_dsr[j])
-                error_out.append(out_cc)
+            # Error out
+            dJ_dso = np.dot(dh_dso, error_at_h)
+            dJ_dsi = np.dot(dc_dsi, error_at_c)
+            dJ_dsu = np.dot(dc_dsu, error_at_c)
+            dJ_dsl = []
+            dJ_dsr = []
+            for j in range(self.paramDim):
+                dJ_dsl.append(np.dot(dc_dsl[j], error_at_c))
+                dJ_dsr.append(np.dot(dc_dsr[j], error_at_c))
+            out_cc = error_at_c
+            error_out = [dJ_dso, dJ_dsi, dJ_dsu]
+            for j in range(self.paramDim):
+                error_out.append(dJ_dsl[j])
+            for j in range(self.paramDim):
+                error_out.append(dJ_dsr[j])
+            error_out.append(out_cc)
         # Parameter Gradients
         if not node.isLeaf:
-                x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
-                # Bias
-                self.dbo += dJ_dso.flatten()
-                self.dbi += dJ_dsi.flatten()
-                self.dbu += dJ_dsu.flatten()
-                for j in range(self.paramDim):
-                        self.dbf += dJ_dsl[j].flatten()
-                        self.dbf += dJ_dsr[j].flatten()
-                # Us
-                for j in node.left:
-                        idx = min(j.idx, self.paramDim-1)
-                        self.dUo[idx] += np.dot(dJ_dso, j.hActs2.T)
-                        self.dUi[idx] += np.dot(dJ_dsi, j.hActs2.T)
-                        self.dUu[idx] += np.dot(dJ_dsu, j.hActs2.T)
-                        for k in range(self.paramDim):
-                                self.dUl[k][idx] += np.dot(dJ_dsl[k], j.hActs2.T)
-                                self.dUr[k][idx] += np.dot(dJ_dsr[k], j.hActs2.T)
-                # Vs
-                for j in node.right:
-                        idx = min(j.idx, self.paramDim-1)
-                        self.dVo[idx] += np.dot(dJ_dso, j.hActs2.T)
-                        self.dVi[idx] += np.dot(dJ_dsi, j.hActs2.T)
-                        self.dVu[idx] += np.dot(dJ_dsu, j.hActs2.T)
-                        for k in range(self.paramDim):
-                                self.dVl[k][idx] += np.dot(dJ_dsl[k], j.hActs2.T)
-                                self.dVr[k][idx] += np.dot(dJ_dsr[k], j.hActs2.T)
-                # Ws
-                self.dWo += np.dot(dJ_dso, x.T)
-                self.dWu += np.dot(dJ_dsu, x.T)
-                self.dWi += np.dot(dJ_dsi, x.T)
-                for j in range(self.paramDim):
-                        self.dWf += np.dot(dJ_dsl[j], x.T)
-                        self.dWf += np.dot(dJ_dsr[j], x.T)
-                # L
-                temp = np.dot(self.Wo.T, dJ_dso).flatten() + np.dot(self.Wi.T, dJ_dsi).flatten() + np.dot(self.Wu.T, dJ_dsu).flatten()
-                for j in range(self.paramDim):
-                        temp += np.dot(self.Wf.T, dJ_dsl[j]).flatten()
-                        temp += np.dot(self.Wf.T, dJ_dsr[j]).flatten()
-                self.dL[node.word] = temp
+            x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
+            # Bias
+            self.dbo += dJ_dso.flatten()
+            self.dbi += dJ_dsi.flatten()
+            self.dbu += dJ_dsu.flatten()
+            for j in range(self.paramDim):
+                self.dbf += dJ_dsl[j].flatten()
+                self.dbf += dJ_dsr[j].flatten()
+            # Us
+            for j in node.left:
+                idx = min(j.idx, self.paramDim-1)
+                self.dUo[idx] += np.dot(dJ_dso, j.hActs2.T)
+                self.dUi[idx] += np.dot(dJ_dsi, j.hActs2.T)
+                self.dUu[idx] += np.dot(dJ_dsu, j.hActs2.T)
+                for k in range(self.paramDim):
+                    self.dUl[k][idx] += np.dot(dJ_dsl[k], j.hActs2.T)
+                    self.dUr[k][idx] += np.dot(dJ_dsr[k], j.hActs2.T)
+            # Vs
+            for j in node.right:
+                idx = min(j.idx, self.paramDim-1)
+                self.dVo[idx] += np.dot(dJ_dso, j.hActs2.T)
+                self.dVi[idx] += np.dot(dJ_dsi, j.hActs2.T)
+                self.dVu[idx] += np.dot(dJ_dsu, j.hActs2.T)
+                for k in range(self.paramDim):
+                    self.dVl[k][idx] += np.dot(dJ_dsl[k], j.hActs2.T)
+                    self.dVr[k][idx] += np.dot(dJ_dsr[k], j.hActs2.T)
+            # Ws
+            self.dWo += np.dot(dJ_dso, x.T)
+            self.dWu += np.dot(dJ_dsu, x.T)
+            self.dWi += np.dot(dJ_dsi, x.T)
+            for j in range(self.paramDim):
+                self.dWf += np.dot(dJ_dsl[j], x.T)
+                self.dWf += np.dot(dJ_dsr[j], x.T)
+            # L
+            temp = np.dot(self.Wo.T, dJ_dso).flatten() + np.dot(self.Wi.T, dJ_dsi).flatten() + np.dot(self.Wu.T, dJ_dsu).flatten()
+            for j in range(self.paramDim):
+                temp += np.dot(self.Wf.T, dJ_dsl[j]).flatten()
+                temp += np.dot(self.Wf.T, dJ_dsr[j]).flatten()
+            self.dL[node.word] = temp
 
-                # Recursion
-                for j in node.left:
-                        self.backProp(j, error_out)
-                for j in node.right:
-                        self.backProp(j, error_out)
+            # Recursion
+            for j in node.left:
+                self.backProp(j, error_out)
+            for j in node.right:
+                self.backProp(j, error_out)
         else:
-                x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
-                dJ_dso = np.dot(dh_dso, error_at_h)
-                dJ_dsi = np.dot(dc_dsi, error_at_c)
-                dJ_dsu = np.dot(dc_dsu, error_at_c)
-                # Bias
-                self.dbo += dJ_dso.flatten()
-                self.dbi += dJ_dsi.flatten()
-                self.dbu += dJ_dsu.flatten()
-                # Ws
-                self.dWo += np.dot(dJ_dso, x.T)
-                self.dWi += np.dot(dJ_dsi, x.T)
-                self.dWu += np.dot(dJ_dsu, x.T)
-                # L
-                self.dL[node.word] = np.dot(self.Wo.T, dJ_dso).flatten() + np.dot(self.Wi.T, dJ_dsi).flatten() + np.dot(self.Wu.T, dJ_dsu).flatten()
+            x = np.reshape(self.L[:, node.word], (self.wvecDim, 1))
+            dJ_dso = np.dot(dh_dso, error_at_h)
+            dJ_dsi = np.dot(dc_dsi, error_at_c)
+            dJ_dsu = np.dot(dc_dsu, error_at_c)
+            # Bias
+            self.dbo += dJ_dso.flatten()
+            self.dbi += dJ_dsi.flatten()
+            self.dbu += dJ_dsu.flatten()
+            # Ws
+            self.dWo += np.dot(dJ_dso, x.T)
+            self.dWi += np.dot(dJ_dsi, x.T)
+            self.dWu += np.dot(dJ_dsu, x.T)
+            # L
+            self.dL[node.word] = np.dot(self.Wo.T, dJ_dso).flatten() + np.dot(self.Wi.T, dJ_dsi).flatten() + np.dot(self.Wu.T, dJ_dsu).flatten()
 
     def updateParams(self,scale,update,log=False):
         """
@@ -555,13 +543,11 @@ class TLSTM:
         for j in dL.iterkeys():
             self.L[:,j] += scale*dL[j]
 
-    def toFile(self,fid):
-        import cPickle as pickle
-        pickle.dump(self.stack,fid)
+    def toFile(self):
+        return self.stack
 
-    def fromFile(self,fid):
-        import cPickle as pickle
-        self.stack = pickle.load(fid)
+    def fromFile(self,stack):
+        self.stack = stack
 
     def check_grad(self,data,epsilon=1e-6):
 
@@ -608,29 +594,3 @@ class TLSTM:
             print "Grad Check Passed for dL"
         else:
             print "Grad Check Failed for dL: Sum of Error = %.9f" % (err2/count)
-
-if __name__ == '__main__':
-
-    import trees as treeM
-    f = open('data/trees')
-    dataSize = 4
-    mbData = []
-    for j in range(dataSize):
-            mbData.append(treeM.Tree(f.readline().split('\t')[1].strip('\n')))
-
-    #import tree as treeM
-    #train = treeM.loadTrees()
-    #numW = len(treeM.loadWordMap())
-
-    wvecDim = 10
-    middleDim = 10
-    paramDim = 3
-    numW = np.load('data/Lmat.npy').shape[0]
-
-    rnn = TLSTM(wvecDim,middleDim,paramDim,numW,mbSize=4)
-    rnn.initParams()
-
-    #mbData = train[:4]
-    #
-    print "Numerical gradient check..."
-    rnn.check_grad(mbData)
