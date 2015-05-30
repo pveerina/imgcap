@@ -306,7 +306,8 @@ class TLSTM:
             for k in range(self.paramDim):
                 self.dVr[j][k] += self.Vr[j][k]*self.rho
 
-        for x in self.grads:
+        # scale all the gradients
+        for x in self.grads[1:]:
             if type(x) == list:
                 for y in x:
                     if type(y) == list:

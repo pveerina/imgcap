@@ -10,7 +10,7 @@ class SGD:
         self.model2 = model.topLayer
         self.dh = dh
         print "initializing SGD"
-        assert self.model is not None, "Must define a function to optimize"
+        assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
         self.alpha = alpha # learning rate
         self.optimizer = optimizer
@@ -32,8 +32,10 @@ class SGD:
         Runs stochastic gradient descent with model as objective.
         """
         print "running SGD"
-        mbdata = self.dh.nextBatch
+        mbdata = self.dh.nextBatch()
         while mbdata != None:
+            import pdb
+            pdb.set_trace()
             self.it = self.dh.cur_iteration
             cost = self.model1.costAndGrad(mbdata)
             grad1 = self.model1.grads
@@ -44,30 +46,43 @@ class SGD:
                 else:
                     self.expcost.append(cost)
             if self.optimizer == 'sgd':
-                update = grad
+                update1 = grad1
+                update2 = grad2
                 scale = -self.alpha
 
             elif self.optimizer == 'adagrad':
-                # trace = trace+grad.^2
-                self.gradt[1:] = [gt+g**2
-                        for gt,g in zip(self.gradt[1:],grad[1:])]
-                # update = grad.*trace.^(-1/2)
+                #
+                # Perform update for network 1 first
+                #
+                self.gradt1[1:] = [gt+g**2
+                        for gt,g in zip(self.gradt1[1:],grad1[1:])]
                 update =  [g*(1./np.sqrt(gt))
-                        for gt,g in zip(self.gradt[1:],grad[1:])]
+                        for gt,g in zip(self.gradt1[1:],grad1[1:])]
                 # handle dictionary separately
-                dL = grad[0]
-                dLt = self.gradt[0]
+                dL = grad1[0]
+                dLt = self.gradt1[0]
                 for j in dL.iterkeys():
                     dLt[:,j] = dLt[:,j] + dL[j]**2
                     dL[j] = dL[j] * (1./np.sqrt(dLt[:,j]))
-                update = [dL] + update
+                update1 = [dL] + update
+                #
+                # Now perform it for network 2
+                #
+                self.gradt2[1:] = [gt+g**2
+                        for gt,g in zip(self.gradt2,grad2)]
+                update =  [g*(1./np.sqrt(gt))
+                        for gt,g in zip(self.gradt2,grad2)]
+                # handle dictionary separately
+                update2 = [dL] + update
+
                 scale = -self.alpha
 
-
             # update params
-            self.model.updateParams(scale,update,log=False)
+            self.model1.updateParams(scale,update1,log=False)
+            self.model2.updateParams(scale,update1)
 
             self.costt.append(cost)
             if self.it%1 == 0:
                 print "Iter %d : Cost=%.4f, ExpCost=%.4f."%(self.it,cost,self.expcost[-1])
+            mbdata = self.dh.nextBatch()
 

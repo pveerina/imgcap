@@ -163,13 +163,9 @@ class Twin:
 	def updateParams(self, scale, update):
 		sent_grads, sent_biasGrads, img_grads, img_biasGrads = update
 
-		for i in xrange(len(self.params)):
-			self.params[i] += scale * update["grads"][i]
-			self.biases[i] += scale * update["biasGrads"][i]
-
-		self.imageLayer += scale * update["imageLayerGrad"]
-		self.imageBias += scale * update["imageLayerBiasGrad"]
-
-		self.sentenceLayer += scale * update["sentenceLayerGrad"]
-		self.sentenceBias += scale * update["sentenceLayerBiasGrad"]
+		for i in xrange(len(self.sent_params)):
+			self.sent_params[i] += scale * sent_grads[i]
+			self.img_params[i] += scale * img_grads[i]
+			self.sent_biases[i] += scale * sent_biasGrad[i]
+			self.img_biases[i] += scale * img_biasGrad[i]
 
