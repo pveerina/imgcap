@@ -19,7 +19,7 @@ def make_onehot(index, length):
 
 class TLSTM:
 
-    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30,rho=1e-4):
+    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30,rho=1e-4, topLayer):
         self.wvecDim = wvecDim
         self.middleDim = middleDim
         self.paramDim = paramDim
@@ -27,6 +27,7 @@ class TLSTM:
         self.mbSize = mbSize
         self.defaultVec = lambda : np.zeros((wvecDim,))
         self.rho = rho
+        self.topLayer = topLayer
 
     def initParams(self):
         np.random.seed(12341)
@@ -134,6 +135,9 @@ class TLSTM:
         or if in test mode
         Returns
            cost, correctArray, guessArray, total
+
+        Note that mbdata is a tuple, consisting of an image vector and
+        a tree.
         """
         cost = 0.0
         correct = []
@@ -196,17 +200,19 @@ class TLSTM:
         self.dL = collections.defaultdict(self.defaultVec)
 
         # Forward prop each tree in minibatch
-        for tree in mbdata:
-            c,tot = self.forwardProp(tree.root,correct,guess)
-            cost += c
+        newmbdata = []
+        for imgvec, tree in mbdata:
+            tot = self.forwardProp(tree.root,correct,guess)
             total += tot
+            newmbdata.append((imgvec, tree.root.hActs2))
+        cost, error = self.topLayer.costAndGrad(newmbdata)
 
         if test:
             return (1./len(mbdata))*cost,correct, guess, total
 
         # Back prop each tree in minibatch
         for tree in mbdata:
-            self.backProp(tree.root)
+            self.backProp(tree.root, error)
 
         # scale cost and grad by mb size
         scale = (1./self.mbSize)
@@ -286,9 +292,9 @@ class TLSTM:
             node.hActs1 = np.multiply(self.i, self.u)
         else:
             for j in node.left:
-                self.forwardProp(j, correct, guess)
+                total += self.forwardProp(j, correct, guess)
             for j in node.right:
-                self.forwardProp(j, correct, guess)
+                total += self.forwardProp(j, correct, guess)
             si = np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1))
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
@@ -368,7 +374,7 @@ class TLSTM:
         #        cost += cost_left + cost_right
         #        total += total_left + total_right
         node.fprop = True
-        #return cost, total + 1
+        return total + 1
 
     def backProp(self,node,error=None):
 
