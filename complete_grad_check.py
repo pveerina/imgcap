@@ -1,9 +1,10 @@
+from __future__ import print_function
 # This performs a grad check on the entire network, exploiting the
 # fact that both the first and second level networks store their stacks
 # by reference.
 
-%load_ext autoreload
-%autoreload 2
+#%load_ext autoreload
+#%autoreload 2
 
 import numpy as np
 from tlstm.datahandler import DataHandler
@@ -13,7 +14,15 @@ import cPickle as pickle
 import conf_gradcheck as opts
 import collections
 import sys
-from __future__ import print_function
+
+
+test_mode = False
+
+if test_mode:
+    opts.wvecDim = 5
+    opts.middleDim = 8
+    opts.sharedDim = 6
+    opts.sentenceDim = opts.middleDim
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -31,24 +40,32 @@ if not 'dh' in locals():
     # instantiate the data handler
     dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_size, opts.test_size, opts.data_type, opts.epoch_lim)
 
-    dh.cur_iteration = 0
-    # grab a batch
-if not 'b' in locals():
-    b = dh.nextBatch()
+# grab a batch
+dh.cur_iteration = 0
+b = dh.nextBatch()
 
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
+
+if test_mode:
+    opts.imageDim = 5
+    for x in b:
+        x[0] = x[0][:opts.imageDim]
 
 net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg)
 
 net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
 
+if test_mode:
+    net1.L = net1.L[:,:opts.wvecDim]
+    net1.stack[0] = net1.L
+
 stack = net1.stack + net2.stack
-grads = net1.grads + net2.grads
 names = net1.names + net2.names
 
 cost, _ = net1.costAndGrad(b)
 
+grads = net1.grads + net2.grads
 epsilon = 1e-4
 comp_grads = []
 # check L first
@@ -60,7 +77,10 @@ cnt = 0
 for n,i in enumerate(dL.iterkeys()):
     for j in xrange(L.shape[1]):
         cnt+=1
-        print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]), end="\r")
+        if cnt == len(dL)*L.shape[1]:
+            print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]))
+        else:
+            print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]), end="\r")
         sys.stdout.flush()
         L[i,j] += epsilon / 2
         costP, _ = net1.costAndGrad(b, test=True)
@@ -78,7 +98,10 @@ for W, name in zip(stack[1:], names[1:]):
     for i in xrange(W.shape[0]):
         for j in xrange(W.shape[1]):
             cnt += 1
-            print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
+            if cnt == W.size:
+                print('\tprog: %6i / %6i'%(cnt,W.size))
+            else:
+                print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
             sys.stdout.flush()
             W[i,j] += epsilon / 2
             costP, _ = net1.costAndGrad(b, test=True)
@@ -87,3 +110,5 @@ for W, name in zip(stack[1:], names[1:]):
             this_grad[i,j] = (costP - costN) / epsilon
             W[i,j] += epsilon / 2
     comp_grads.append(this_grad)
+np.savez('grad_checks/grads.npz',[np.array(grads[0].values())] + grads[1:])
+np.savez('grad_checks/comp_grads.npz',[np.array(comp_grads[0].values())] + comp_grads[1:])

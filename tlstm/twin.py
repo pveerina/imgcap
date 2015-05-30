@@ -32,6 +32,11 @@ class Twin:
 			return np.zeros((self.sharedDim, self.sharedDim))
 
 
+		self.sent_param_names = []
+		self.sent_bias_names = []
+		self.img_param_names = []
+		self.img_bias_names = []
+
 		# initialize sentence stuff
 		self.sent_params.append(0.1*np.random.randn(self.sharedDim, self.sentenceDim))
 		self.sent_grads.append(np.zeros((self.sharedDim, self.sentenceDim)))
@@ -43,29 +48,28 @@ class Twin:
 		self.img_grads.append(np.zeros((self.sharedDim, self.imageDim)))
 		self.img_biases.append(yb())
 		self.img_biasGrads.append(ybg())
-
-		self.sent_param_names = []
-		self.sent_bias_names = []
-		self.img_param_names = []
-		self.img_bias_names = []
+		self.sent_param_names.append('sent_W%i'%(0))
+		self.sent_bias_names.append('sent_b%i'%(0))
+		self.img_param_names.append('img_W%i'%(0))
+		self.img_bias_names.append('img_b%i'%(0))
 		# and for the remaining layers
 		for l in xrange(self.numLayers):
 			self.sent_params.append(yW())
-			self.sent_param_names.append('sent_W%i'%(l))
+			self.sent_param_names.append('sent_W%i'%(l+1))
 			self.sent_grads.append(yWg())
 			self.sent_biases.append(yb())
-			self.sent_bias_names.append('sent_b%i'%(l))
+			self.sent_bias_names.append('sent_b%i'%(l+1))
 			self.sent_biasGrads.append(ybg())
 			self.img_params.append(yW())
-			self.img_param_names.append('img_W%i'%(l))
+			self.img_param_names.append('img_W%i'%(l+1))
 			self.img_grads.append(yWg())
 			self.img_biases.append(yb())
-			self.img_bias_names.append('img_b%i'%(l))
+			self.img_bias_names.append('img_b%i'%(l+1))
 			self.img_biasGrads.append(ybg())
 
 		self.grads = self.sent_grads+self.sent_biasGrads+self.img_grads+self.img_biasGrads
 		self.stack = self.sent_params+self.sent_biases+self.img_params+self.img_biases
-		self.names = self.sent_param_names + self.sent_bias_names + self.img_param_names + self.sent_bias_names
+		self.names = self.sent_param_names + self.sent_bias_names + self.img_param_names + self.img_bias_names
 
 	def clearGradients(self):
 		for y in self.grads:

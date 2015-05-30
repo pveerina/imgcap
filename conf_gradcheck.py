@@ -18,7 +18,7 @@ epoch_lim = 50 # the number of epochs to run for
 
 # DT-LSTM network parameters
 wvecDim = 300 # dimensionality of the word vectors
-middleDim = 25 # dimensionality of the hidden layer
+middleDim = 20 # dimensionality of the hidden layer
 paramDim = 2 # the number of children to consider is given by
              # (2*paramDim), any children beyond this are not considered
 numWords = None # the size of the L matrix, defined by the runNet script

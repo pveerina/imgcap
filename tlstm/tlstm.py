@@ -195,7 +195,6 @@ class TLSTM:
         correct = []
         guess = []
         total = 0.0
-
         self.L = self.stack[0]
 
         self.Wo = self.stack[1]
