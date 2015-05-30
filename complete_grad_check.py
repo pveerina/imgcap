@@ -24,6 +24,14 @@ if test_mode:
     opts.middleDim = 8
     opts.sharedDim = 6
     opts.sentenceDim = opts.middleDim
+    #opts.reg = 0
+    #opts.rho = 0
+    mult_factor = 50
+
+# the relative error for gradients
+def rel_error(x, y):
+  """ returns relative error """
+  return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -52,13 +60,15 @@ if test_mode:
     opts.imageDim = 5
     for x in b:
         x[0] = x[0][:opts.imageDim]
+        x[0] = x[0] * mult_factor
+
 
 net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg)
 
 net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
 
 if test_mode:
-    net1.L = net1.L[:,:opts.wvecDim]
+    net1.L = net1.L[:,:opts.wvecDim] * mult_factor
     net1.stack[0] = net1.L
 
 stack = net1.stack + net2.stack
@@ -67,7 +77,7 @@ names = net1.names + net2.names
 cost, _ = net1.costAndGrad(b)
 
 grads = deepcopy(net1.grads) + deepcopy(net2.grads)
-epsilon = 1e-4
+epsilon = 1e-5
 comp_grads = []
 # check L first
 L = net1.stack[0]
@@ -122,12 +132,14 @@ for i,j,k in zip(names, grads, comp_grads):
 for k in sorted(gradD.keys()):
     try:
         a, b = gradD[k]
-        error = a.flatten().reshape(-1) / b.flatten().reshape(-1)
-        error = np.nanmean(error)
-        print('%s : %.4f [%s]'%(k, error, a.shape))
+        a = a.flatten()
+        b = b.flatten()
+        error = rel_error(a,b)
+        print('%s : %g [%s]'%(k, error, str(a.shape)))
     except:
         a = np.array(gradD[k][0].values())
-        b = np.array(gradD[k][0].values())
-        error = a.flatten().reshape(-1) / b.flatten().reshape(-1)
-        error = np.nanmean(error)
-        print('%s : %.4f [%s]'%(k, error, str(a.shape())))
+        b = np.array(gradD[k][1].values())
+        a = a.flatten()
+        b = b.flatten()
+        error = rel_error(a,b)
+        print('%s : %g [%s]'%(k, error, str(a.shape)))
