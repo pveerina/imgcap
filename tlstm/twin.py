@@ -2,16 +2,16 @@ import numpy as np
 from collections import Counter
 
 class Twin:
-	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, scale, reg=1e-4):
+	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, scale, reg=1e-4, params=None):
 		self.sentenceDim = sentenceDim
 		self.imageDim = imageDim
 		self.reg = reg
 		self.sharedDim = sharedDim
 		self.numLayers = numLayers
 		self.scale = scale
-		self.initParams()
+		self.initParams(params)
 
-	def initParams(self):
+	def initParams(self, params):
 
 		self.sent_params = []
 		self.sent_grads = []
@@ -70,6 +70,10 @@ class Twin:
 		self.grads = self.sent_grads+self.sent_biasGrads+self.img_grads+self.img_biasGrads
 		self.stack = self.sent_params+self.sent_biases+self.img_params+self.img_biases
 		self.names = self.sent_param_names + self.sent_bias_names + self.img_param_names + self.img_bias_names
+
+		if params is not None:
+			for i, name in enumerate(self.names):
+				self.stack[i] = params[name]
 
 	def clearGradients(self):
 		for y in self.grads:

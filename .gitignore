@@ -100,3 +100,5 @@ L_dict
 utils/treegen/parse*
 *.npz
 *.log
+models/*
+conf*

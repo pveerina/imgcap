@@ -38,4 +38,11 @@ sentenceDim = middleDim # the dimensionality of the sentences
 imageDim = None # the dimensionality of the images; set by runNet
 sharedDim = 275 # the size of the final output
 numLayers = 2 # the number of layers to include, not including the first layer
+<<<<<<< HEAD
 reg = 0#1e-4 # the regularization constant
+=======
+reg = 1e-4 # the regularization constant
+
+
+saved_model = None
+>>>>>>> 01668f1361d024c103042ef4a5c6ccedb3cc156b

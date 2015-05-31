@@ -20,7 +20,7 @@ def make_onehot(index, length):
 
 class TLSTM:
 
-    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None, root=None):
+    def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None, root=None, params=None):
         self.wvecDim = wvecDim
         self.middleDim = middleDim
         self.paramDim = paramDim
@@ -31,9 +31,9 @@ class TLSTM:
         self.rho = rho
         self.topLayer = topLayer
         self.root = root
-        self.initParams()
+        self.initParams(params)
 
-    def initParams(self):
+    def initParams(self, params):
         # MAKE SURE THEY READ IN
 
         # Word vectors
@@ -173,6 +173,11 @@ class TLSTM:
         self.stack.append(self.bf)
         self.names.append('br')
         self.grads.append(self.dbf)
+
+        if params is not None:
+            for i, name in enumerate(self.names):
+                self.stack[i] = params[name]
+
 
     def costAndGrad(self,mbdata,test=False, testCost=False):
         """
