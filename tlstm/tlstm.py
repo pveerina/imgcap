@@ -174,7 +174,7 @@ class TLSTM:
         self.names.append('br')
         self.grads.append(self.dbf)
 
-    def costAndGrad(self,mbdata,test=False):
+    def costAndGrad(self,mbdata,test=False, testCost=False):
         """
         Each datum in the minibatch is a tree.
         Forward prop each tree.
@@ -258,9 +258,14 @@ class TLSTM:
             newmbdata.append((imgvec, tree.root.hActs2))
 
         if test:
-            cost = self.topLayer.costAndGrad(newmbdata, test=True)
+            cost = self.topLayer.costAndGrad(newmbdata, test=True, testCost=testCost)
         else:
-            cost, error = self.topLayer.costAndGrad(newmbdata)
+            if testCost:
+                cost, error = self.topLayer.costAndGrad(newmbdata, testCost=testCost)
+            else:
+                cost, error = self.topLayer.costAndGrad(newmbdata)
+
+        cost *= self.scale
 
         # Add L2 Regularization
         cost += (self.rho/2)*np.sum(self.Wf**2)
@@ -285,7 +290,7 @@ class TLSTM:
             cost += (self.rho/2)*np.sum(self.Vu[j]**2)
 
         if test:
-            return self.scale*cost, total
+            return cost, total
 
          # Back prop each tree in minibatch
         for n, (_, tree) in enumerate(mbdata):

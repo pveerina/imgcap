@@ -32,7 +32,7 @@ if test_mode:
 # the relative error for gradients
 def rel_error(x, y):
   """ returns relative error """
-  return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
+  return np.max(np.abs(x - y) / (np.maximum(1, np.abs(x) + np.abs(y))))
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -82,7 +82,7 @@ else:
     stack = net1.stack + net2.stack
     names = net1.names + net2.names
 
-cost, _ = net1.costAndGrad(b)
+cost, _ = net1.costAndGrad(b, testCost=True)
 
 # # 'update' the parameters, just for testing
 # update = net2.grads

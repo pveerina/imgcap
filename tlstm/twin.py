@@ -75,30 +75,10 @@ class Twin:
 		for y in self.grads:
 			y[:] = 0.
 
-	def costAndGrad(self, mbdata, test=False):
-		mbSize = len(mbdata)
-		cost = 0.0
-		batch_image_activations = []
-		batch_sentence_activations = []
-		self.clearGradients()
-
-		for i, (imageVec, sentenceVec) in enumerate(mbdata):
-			image_activations = self.forwardPropImage(imageVec)
-			sentence_activations = self.forwardPropSentence(sentenceVec)
-			batch_image_activations.append(image_activations)
-			batch_sentence_activations.append(sentence_activations)
-
-		image_deltas = []
-		sentence_deltas = []
-		cost = 0.0
-
-		# compute cost
-		ys = [x[-1] for x in batch_image_activations]
-		xs = [x[-1] for x in batch_sentence_activations]
+	def costFunction(self, xs, ys, test=False):
 		s1 = []
 		s2 = []
-		# cy, cx = correct y, x
-		# iy, ix = incorrect y, x
+		cost = 0.
 		for i, (cy, cx) in enumerate(zip(ys, xs)):
 			c1s = np.zeros(len(ys))
 			c2s = np.zeros(len(ys))
@@ -111,22 +91,130 @@ class Twin:
 			s1.append(c1s)
 			s2.append(c2s)
 			cost += np.sum(c1s) + np.sum(c2s)
-		# now compute the deltas
-		image_deltas = []
-		sentence_deltas = []
+		if test:
+			return cost
+		xd = [] # x-deltas
+		yd = [] # y-deltas
 		for i, (cy, cx) in enumerate(zip(ys, xs)):
-			c_id = 0
-			c_sd = 0
+			c_xd = 0
+			c_yd = 0
 			for j, (iy, ix) in enumerate(zip(ys, xs)):
 				if i != j:
 					# delta w.r.t. x
-					c_sd += (iy - cy)*(s1[i][j]>0) - cy*(s2[i][j]>0) + iy * (s2[j][i]>0)
+					c_xd += (iy - cy)*(s1[i][j]>0) - cy*(s2[i][j]>0) + iy * (s2[j][i]>0)
 					# delta w.r.t y
-					c_id += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
-			image_deltas.append(c_id)
-			sentence_deltas.append(c_sd)
-			# import pdb
-			# pdf.set_trace()
+					c_yd += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
+			xd.append(c_xd)
+			yd.append(c_yd)
+		return cost, xd, yd
+
+	def testCost(self, xs, ys):
+		# tests the cost function deltas, to make sure they are
+		# correct.
+		c, xd, yd = self.costFunction(xs, ys)
+		cyd = []
+		cxd = []
+		epsilon = 1e-5
+		tol = 1e-5
+		def rel_error(x, y):
+		  """ returns relative error """
+		  return np.max(np.abs(x - y) / (np.maximum(1e-5, np.abs(x) + np.abs(y))))
+		for i in xs:
+		    ccxs = []
+		    for j in range(i.size):
+		        i[j] += epsilon / 2
+		        cP = self.costFunction(xs, ys, True)
+		        i[j] -= epsilon
+		        cN = self.costFunction(xs, ys, True)
+		        i[j] += epsilon / 2
+		        ccxs.append((cP-cN)/epsilon)
+		    cxd.append(np.array(ccxs))
+		cxd = np.array(cxd)
+
+		for i in ys:
+		    ccxs = []
+		    for j in range(i.size):
+		        i[j] += epsilon / 2
+		        cP = self.costFunction(xs, ys, True)
+		        i[j] -= epsilon
+		        cN = self.costFunction(xs, ys, True)
+		        i[j] += epsilon / 2
+		        ccxs.append((cP-cN)/epsilon)
+		    cyd.append(np.array(ccxs))
+		cyd = np.array(cyd)
+
+		re1 = rel_error(xd, cxd)
+		re2 = rel_error(yd, cyd)
+		print 'Rel Error [x]: %g'%re1
+		# if re1 > tol:
+		# 	import pdb
+		# 	pdb.set_trace()
+		print 'Rel Error [y]: %g'%re2
+		# if re2 > tol:
+		# 	import pdb
+		# 	pdb.set_trace()
+		if re1 < tol and re2 < tol:
+			return True
+		return False
+
+	def costAndGrad(self, mbdata, test=False, testCost=False):
+		mbSize = len(mbdata)
+		cost = 0.0
+		batch_image_activations = []
+		batch_sentence_activations = []
+		self.clearGradients()
+		for i, (imageVec, sentenceVec) in enumerate(mbdata):
+			image_activations = self.forwardPropImage(imageVec)
+			sentence_activations = self.forwardPropSentence(sentenceVec)
+			batch_image_activations.append(image_activations)
+			batch_sentence_activations.append(sentence_activations)
+		sentActs = [x[-1] for x in batch_sentence_activations]
+		imageActs = [x[-1] for x in batch_image_activations]
+		if testCost:
+			costCheckPass = self.testCost(imageActs, sentActs)
+			if not costCheckPass:
+				print 'Cost function grad check failed!'
+			else:
+				print 'Cost function grad check passed!'
+		cost, image_deltas, sentence_deltas = \
+		self.costFunction(imageActs, sentActs)
+		# image_deltas = []
+		# sentence_deltas = []
+		# cost = 0.0
+
+		# # compute cost
+		# ys = [x[-1] for x in batch_image_activations]
+		# xs = [x[-1] for x in batch_sentence_activations]
+		# s1 = []
+		# s2 = []
+		# # cy, cx = correct y, x
+		# # iy, ix = incorrect y, x
+		# for i, (cy, cx) in enumerate(zip(ys, xs)):
+		# 	c1s = np.zeros(len(ys))
+		# 	c2s = np.zeros(len(ys))
+		# 	cpair = cx.dot(cy)
+		# 	for j, (iy, ix) in enumerate(zip(ys, xs)):
+		# 		if i != j:
+		# 			cpair = cx.dot(cy)
+		# 			c1s[j] = max(0, 1 - cpair + cx.dot(iy))
+		# 			c2s[j] = max(0, 1 - cpair + ix.dot(cy))
+		# 	s1.append(c1s)
+		# 	s2.append(c2s)
+		# 	cost += np.sum(c1s) + np.sum(c2s)
+		# # now compute the deltas
+		# image_deltas = []
+		# sentence_deltas = []
+		# for i, (cy, cx) in enumerate(zip(ys, xs)):
+		# 	c_id = 0
+		# 	c_sd = 0
+		# 	for j, (iy, ix) in enumerate(zip(ys, xs)):
+		# 		if i != j:
+		# 			# delta w.r.t. x
+		# 			c_sd += (iy - cy)*(s1[i][j]>0) - cy*(s2[i][j]>0) + iy * (s2[j][i]>0)
+		# 			# delta w.r.t y
+		# 			c_id += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
+		# 	image_deltas.append(c_id)
+		# 	sentence_deltas.append(c_sd)
 		if test:
 			return cost
 
@@ -167,7 +255,6 @@ class Twin:
 		# move backwards through the layers
 		num_layers = len(self.sent_params)
 		idx = range(num_layers)[::-1]
-
 		# perform it for images first
 		delta = image_delta_top
 		h = image_activations
