@@ -81,8 +81,9 @@ else:
 
 # profiling
 def iterate_costAndGrad(n):
-    for i in n:
+    for i in range(n):
+        print i
         net1.costAndGrad(b)
 
 print 'Beginning profile'
-cProfile.run('iterate_costAndGrad(1000)')
+cProfile.run('iterate_costAndGrad(10)')
