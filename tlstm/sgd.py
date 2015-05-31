@@ -69,18 +69,17 @@ class SGD:
                 dL = grad1[0]
                 dLt = self.gradt1[0]
                 for j in dL.iterkeys():
-                    dLt[:,j] = dLt[:,j] + dL[j]**2
-                    dL[j] = dL[j] * (1./np.sqrt(dLt[:,j]))
+                    dLt[j] = dLt[j,:] + dL[j]**2
+                    dL[j] = dL[j] * (1./np.sqrt(dLt[j,:]))
                 update1 = [dL] + update
                 #
                 # Now perform it for network 2
                 #
-                self.gradt2[1:] = [gt+g**2
+                self.gradt2 = [gt+g**2
                         for gt,g in zip(self.gradt2,grad2)]
-                update =  [g*(1./np.sqrt(gt))
+                update2 =  [g*(1./np.sqrt(gt))
                         for gt,g in zip(self.gradt2,grad2)]
                 # handle dictionary separately
-                update2 = [dL] + update
 
                 scale = -self.alpha
 

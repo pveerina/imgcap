@@ -36,7 +36,7 @@ net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mb
 #net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2)
 
 # instantiate the SGD
-sgd = optimizer.SGD(net1, opts.alpha, dh, optimizer='sgd')
+sgd = optimizer.SGD(net1, opts.alpha, dh, optimizer=opts.optimizer)
 #sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
 
 sgd.run()

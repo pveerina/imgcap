@@ -6,7 +6,8 @@ arguments to be parsed by the wrapper.
 
 # global parameters
 root = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap' # root directory
-alpha = 1e-4 # the learning rate
+alpha = 1e-2 # the learning rate
+optimizer = 'adagrad'
 
 # data handler parameters
 megabatch_size = 10000 # the size of the chunk to load into memory at a time
