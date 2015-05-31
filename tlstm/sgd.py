@@ -8,6 +8,8 @@ class SGD:
         # dh = instance of data handler
         self.model1 = model
         self.model2 = model.topLayer
+        totparams = np.sum([x.size for x in self.model1.stack]) + np.sum([x.size for x in self.model2.stack])
+        print '%i total parameters'%(totparams)
         self.dh = dh
         print "initializing SGD"
         assert self.model1 is not None, "Must define a function to optimize"
