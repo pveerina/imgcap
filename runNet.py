@@ -1,12 +1,15 @@
+### NOTE: IF YOU ARE NOT USING IPYTHON, REMOVE THE NEXT TWO LINES
 %load_ext autoreload
 %autoreload 2
 
 import numpy as np
 from tlstm.datahandler import DataHandler
-from tlstm import sgd as optimizer
 import optparse
 import cPickle as pickle
 import conf as opts
+from tlstm.tlstm import TLSTM
+from tlstm.twin import Twin
+from tlstm import sgd as optimizer
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -24,8 +27,6 @@ if opts.data_type == 'both':
 dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_size, opts.test_size, opts.data_type, opts.epoch_lim)
 
 dh.cur_iteration = 0
-from tlstm.tlstm import TLSTM
-from tlstm.twin import Twin
 # instantiate the second 'layer'
 net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
 #net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)

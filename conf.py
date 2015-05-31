@@ -3,9 +3,10 @@ This file stores the configuration for the entire network, as this is
 simply much easier than passing in all of the configurations as
 arguments to be parsed by the wrapper.
 '''
-
+import os
 # global parameters
-root = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap' # root directory
+#root = '/Users/ndufour/Dropbox/Class/CS224D/project/imgcap' # root directory
+root = os.path.dirname(os.path.realpath(__file__))
 alpha = 1e-2 # the learning rate
 # 1e-2 is the fastest the vanilla network can learn using SGD and no
 # regularization. it appears to be able to work with ADAGRAD as well,
