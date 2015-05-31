@@ -35,7 +35,7 @@ dh.cur_iteration = 0
 if opts.saved_model is not None:
 	params = np.load(opts.saved_model)
 else:
-	params is None
+	params = None
 
 
 # instantiate the second 'layer'
