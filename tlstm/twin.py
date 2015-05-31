@@ -125,6 +125,8 @@ class Twin:
 					c_id += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
 			image_deltas.append(c_id)
 			sentence_deltas.append(c_sd)
+			# import pdb
+			# pdf.set_trace()
 		if test:
 			return cost
 

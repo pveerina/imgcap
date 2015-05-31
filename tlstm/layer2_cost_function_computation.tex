@@ -40,9 +40,9 @@
 
 
 \begin{document}
-$$s_{1,i} = \sum_{j \not= i}\max(0, \Delta - x_i y_i + x_i y_j)$$
-$$s_{2,i} = \sum_{j \not= i}\max(0, \Delta - x_i y_i + x_j y_i)$$
-$$J(\theta)_i = s_{1,i} + s_{2,i}$$
-$$\frac{\partial J(\theta)}{\partial x_i} = \sum_{j \not=i} (y_j-y_i) (s_{1,i} > 0) - \sum_{j \not= i} (y_i) (s_{2,i} > 0) + \sum_{j\not= i} y_j (s_{2,j}>0)$$
-$$\frac{\partial J(\theta)}{\partial y_i} = \sum_{j \not= i} (x_j-x_i) (s_{2,i} > 0)  - \sum_{j \not=i} (x_i) (s_{1,i} > 0) + \sum_{j\not= i} x_j (s_{1,j}>0)$$
+$$s_{1,i,j} = \mathds{1}\{i\not=j\}\max(0, \Delta - x_i y_i + x_i y_j)$$
+$$s_{2,i,j} = \mathds{1}\{i\not=j\}\max(0, \Delta - x_i y_i + x_j y_i)$$
+$$J(\theta)_i = \sum_{j} s_{1,i,j} + s_{2,i,j}$$
+$$\frac{\partial J(\theta)}{\partial x_i} = \sum_{j \not=i} (y_j-y_i) (s_{1,i,j} > 0) - \sum_{j \not= i} (y_i) (s_{2,i,j} > 0) + \sum_{j\not= i} y_j (s_{2,j,i}>0)$$
+$$\frac{\partial J(\theta)}{\partial y_i} = \sum_{j \not= i} (x_j-x_i) (s_{2,i,j} > 0)  - \sum_{j \not=i} (x_i) (s_{1,i,j} > 0) + \sum_{j\not= i} x_j (s_{1,j,i}>0)$$
 \end{document}

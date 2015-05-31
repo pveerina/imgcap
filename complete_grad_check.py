@@ -27,7 +27,7 @@ if test_mode:
     opts.sentenceDim = opts.middleDim
     #opts.reg = 0
     #opts.rho = 0
-    mult_factor = 50
+    mult_factor = 1#50
 
 # the relative error for gradients
 def rel_error(x, y):

@@ -29,5 +29,5 @@ rho = 1e-4 # the regularization constant
 sentenceDim = middleDim # the dimensionality of the sentences
 imageDim = None # the dimensionality of the images; set by runNet
 sharedDim = 25 # the size of the final output
-numLayers = 2 # the number of layers to include, not including the first layer
+numLayers = 1 # the number of layers to include, not including the first layer
 reg = 1e-4 # the regularization constant
