@@ -107,5 +107,5 @@ class SGD:
 
     def save_checkpoint(self, checkpoint_name):
         param_dict = dict(zip(self.model1.names, self.model1.stack) + zip(self.model2.names, self.model2.stack))
-        np.savez(self.model_filename%checkpoint_number, **param_dict)
+        np.savez(self.model_filename%checkpoint_name, **param_dict)
 
