@@ -34,6 +34,9 @@ dh.cur_iteration = 0
 
 if opts.saved_model is not None:
 	params = np.load(opts.saved_model)
+else:
+	params is None
+
 
 # instantiate the second 'layer'
 net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0, params=params)
