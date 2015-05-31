@@ -35,7 +35,7 @@ class SGD:
         mbdata = self.dh.nextBatch()
         while mbdata != None:
             self.it = self.dh.cur_iteration
-            cost = self.model1.costAndGrad(mbdata)
+            cost, _ = self.model1.costAndGrad(mbdata)
             grad1 = self.model1.grads
             grad2 = self.model2.grads
             if np.isfinite(cost):
