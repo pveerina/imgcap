@@ -83,6 +83,7 @@ else:
 
 cost, _ = net1.costAndGrad(b, testCost=True)
 
+
 # # 'update' the parameters, just for testing
 # update = net2.grads
 # net2.updateParams(-1e-5, update)

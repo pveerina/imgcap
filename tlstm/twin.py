@@ -108,10 +108,39 @@ class Twin:
 			yd.append(c_yd)
 		return cost, xd, yd
 
+	def newCostFunction(self, xs, ys, test=False):
+	    xs = np.array(xs)
+	    ys = np.array(ys)
+	    s1 = xs.dot(ys.T).T
+	    s2 = ys.dot(xs.T).T
+
+	    s1 = np.maximum(0, 1 - np.diag(s1) + s1).T
+	    s2 = np.maximum(0, 1 - np.diag(s2) + s2).T
+
+	    s1[np.diag_indices_from(s1)] = 0
+	    s2[np.diag_indices_from(s2)] = 0
+	    ns1 = s1
+	    ns2 = s2
+	    cost = np.sum(s1)+np.sum(s2)
+	    if test:
+	    	return cost
+	    s1t = s1 > 0
+	    s2t = s2 > 0
+	    tx1 = (ys[:,:,None].T - ys[:,:,None]).transpose([0,2,1])*s1t[:,:,None]
+	    ty1 = (xs[:,:,None].T - xs[:,:,None]).transpose([0,2,1])*s2t[:,:,None]
+	    tx2 = (ys * np.ones((len(xs),len(xs),xs[0].size))).transpose(1,0,2) * s2t[:,:,None]
+	    ty2 = (xs * np.ones((len(xs),len(xs),xs[0].size))).transpose(1,0,2) * s1t[:,:,None]
+	    tx3 = (s2t.T)[:,:,None]*ys
+	    ty3 = (s1t.T)[:,:,None]*xs
+	    xd = np.sum(tx1 - tx2 + tx3, 1)
+	    yd = np.sum(ty1 - ty2 + ty3, 1)
+	    return cost, list(xd), list(yd)
+
 	def testCost(self, xs, ys):
 		# tests the cost function deltas, to make sure they are
 		# correct.
-		c, xd, yd = self.costFunction(xs, ys)
+		#c, xd, yd = self.costFunction(xs, ys)
+		c, xd, yd = self.newCostFunction(xs, ys)
 		cyd = []
 		cxd = []
 		epsilon = 1e-5
@@ -123,9 +152,11 @@ class Twin:
 		    ccxs = []
 		    for j in range(i.size):
 		        i[j] += epsilon / 2
-		        cP = self.costFunction(xs, ys, True)
+		        #cP = self.costFunction(xs, ys, True)
+		        cP = self.newCostFunction(xs, ys, True)
 		        i[j] -= epsilon
-		        cN = self.costFunction(xs, ys, True)
+		        #cN = self.costFunction(xs, ys, True)
+		        cN = self.newCostFunction(xs, ys, True)
 		        i[j] += epsilon / 2
 		        ccxs.append((cP-cN)/epsilon)
 		    cxd.append(np.array(ccxs))
@@ -135,9 +166,11 @@ class Twin:
 		    ccxs = []
 		    for j in range(i.size):
 		        i[j] += epsilon / 2
-		        cP = self.costFunction(xs, ys, True)
+		        #cP = self.costFunction(xs, ys, True)
+		        cP = self.newCostFunction(xs, ys, True)
 		        i[j] -= epsilon
-		        cN = self.costFunction(xs, ys, True)
+		        #cN = self.costFunction(xs, ys, True)
+		        cN = self.newCostFunction(xs, ys, True)
 		        i[j] += epsilon / 2
 		        ccxs.append((cP-cN)/epsilon)
 		    cyd.append(np.array(ccxs))
@@ -177,7 +210,7 @@ class Twin:
 			else:
 				print 'Cost function grad check passed!'
 		cost, image_deltas, sentence_deltas = \
-		self.costFunction(imageActs, sentActs)
+		self.newCostFunction(imageActs, sentActs)
 		if test:
 			return cost
 

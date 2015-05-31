@@ -1,6 +1,6 @@
 ### NOTE: IF YOU ARE NOT USING IPYTHON, REMOVE THE NEXT TWO LINES
-%load_ext autoreload
-%autoreload 2
+#%load_ext autoreload
+#%autoreload 2
 
 import numpy as np
 from tlstm.datahandler import DataHandler
