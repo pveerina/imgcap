@@ -105,6 +105,8 @@ class DataHandler():
             self.test_size = int(test_size * len(data_dict))
         if val_size > 0 and val_size < 1:
             self.val_size = int(val_size * len(data_dict))
+        self.test_size = int(self.test_size)
+        self.val_size = int(self.val_size)
         # select the image set for testing
         shuf_ims = data_dict.keys()
         np.random.shuffle(shuf_ims)

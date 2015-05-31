@@ -93,7 +93,7 @@ class SGD:
 
             self.costt.append(cost)
             if self.it%1 == 0:
-                msg = "Iter %d : Cost=%.4f, ExpCost=%.4f."%(self.it,cost,self.expcost[-1])
+                msg = "Iter %d Megabatch %d Epoch %d: Cost=%7.4f, ExpCost=%7.4f."%(self.it,self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
                 print msg
                 if self.logfile is not None:
                     with open(self.logfile, "a") as logfile:
