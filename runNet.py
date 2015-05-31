@@ -30,18 +30,22 @@ if opts.data_type == 'both':
 dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_size, opts.test_size, opts.data_type, opts.epoch_lim)
 
 dh.cur_iteration = 0
+
+if opts.saved_model is not None:
+	params = np.load(opts.saved_model)
+
 # instantiate the second 'layer'
-net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
+net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0, params=params)
 #net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
 
 # instantiate the first 'layer'
-net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
+net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root, params=params)
 
 #net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2)
 
 # instantiate the SGD
 model_filename = "models/m_" + datetime.now().strftime("%m%d_%H%M%S") + "_%s"
-log_filename = "logs/m_" + datetime.now().strftime("%m%d_%H%M%S")
+log_filename = "logs/m_" + datetime.now().strftime("%m%d_%H%M%S.log")
 sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename)
 
 #sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
