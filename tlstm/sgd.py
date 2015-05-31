@@ -102,7 +102,7 @@ class SGD:
             if self.dh.cur_megabatch != prev_megabatch:
                 # checkpoint
                 prev_megabatch = self.dh.cur_megabatch
-                self.save_checkpoint(""+prev_megabatch)
+                self.save_checkpoint("%d"%prev_megabatch)
 
 
     def save_checkpoint(self, checkpoint_name):
