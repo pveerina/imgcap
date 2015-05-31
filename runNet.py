@@ -40,8 +40,8 @@ net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mb
 #net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2)
 
 # instantiate the SGD
-model_filename = "models/m_" + datetime.now()).strftime("%m%d_%H%M%S") + "_%s"
-log_filename = "logs/m_" + datetime.now()).strftime("%m%d_%H%M%S")
+model_filename = "models/m_" + datetime.now().strftime("%m%d_%H%M%S") + "_%s"
+log_filename = "logs/m_" + datetime.now().strftime("%m%d_%H%M%S")
 sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename)
 
 #sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
