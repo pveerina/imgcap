@@ -98,3 +98,5 @@ dep_parse*
 glove.*.txt
 L_dict
 utils/treegen/parse*
+*.npz
+*.log
