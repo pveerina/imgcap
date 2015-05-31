@@ -178,43 +178,6 @@ class Twin:
 				print 'Cost function grad check passed!'
 		cost, image_deltas, sentence_deltas = \
 		self.costFunction(imageActs, sentActs)
-		# image_deltas = []
-		# sentence_deltas = []
-		# cost = 0.0
-
-		# # compute cost
-		# ys = [x[-1] for x in batch_image_activations]
-		# xs = [x[-1] for x in batch_sentence_activations]
-		# s1 = []
-		# s2 = []
-		# # cy, cx = correct y, x
-		# # iy, ix = incorrect y, x
-		# for i, (cy, cx) in enumerate(zip(ys, xs)):
-		# 	c1s = np.zeros(len(ys))
-		# 	c2s = np.zeros(len(ys))
-		# 	cpair = cx.dot(cy)
-		# 	for j, (iy, ix) in enumerate(zip(ys, xs)):
-		# 		if i != j:
-		# 			cpair = cx.dot(cy)
-		# 			c1s[j] = max(0, 1 - cpair + cx.dot(iy))
-		# 			c2s[j] = max(0, 1 - cpair + ix.dot(cy))
-		# 	s1.append(c1s)
-		# 	s2.append(c2s)
-		# 	cost += np.sum(c1s) + np.sum(c2s)
-		# # now compute the deltas
-		# image_deltas = []
-		# sentence_deltas = []
-		# for i, (cy, cx) in enumerate(zip(ys, xs)):
-		# 	c_id = 0
-		# 	c_sd = 0
-		# 	for j, (iy, ix) in enumerate(zip(ys, xs)):
-		# 		if i != j:
-		# 			# delta w.r.t. x
-		# 			c_sd += (iy - cy)*(s1[i][j]>0) - cy*(s2[i][j]>0) + iy * (s2[j][i]>0)
-		# 			# delta w.r.t y
-		# 			c_id += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
-		# 	image_deltas.append(c_id)
-		# 	sentence_deltas.append(c_sd)
 		if test:
 			return cost
 
@@ -238,15 +201,15 @@ class Twin:
 		return cost, sentence_input_grads
 
 	def forwardPropImage(self, imageVec):
-		return self.forwardProp(imageVec, self.img_params, self.img_biases)
+		return self.forwardProp(imageVec.squeeze(), self.img_params, self.img_biases)
 
 	def forwardPropSentence(self, sentVec):
-		return self.forwardProp(sentVec, self.sent_params, self.sent_biases)
+		return self.forwardProp(sentVec.squeeze(), self.sent_params, self.sent_biases)
 
 	def forwardProp(self, h, Ws, bs):
 		activations = [h]
-		for i, W in enumerate(Ws):
-			h = np.maximum(W.dot(h).squeeze() + bs[i], 0)
+		for i in range(len(Ws)):
+			h = np.maximum(Ws[i].dot(h).squeeze() + bs[i].squeeze(), 0)
 			activations.append(h)
 		return activations
 

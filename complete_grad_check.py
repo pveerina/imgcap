@@ -18,7 +18,7 @@ from copy import deepcopy
 
 
 test_mode = True
-net_to_test = '2'
+net_to_test = 'both'
 
 if test_mode:
     opts.wvecDim = 5
@@ -46,23 +46,22 @@ opts.imageDim = 4096
 if opts.data_type == 'both':
     opts.imageDim *= 2
 
-if not 'dh' in locals():
+if not 'b' in locals():
     # instantiate the data handler
     dh = DataHandler(opts.root, opts.megabatch_size, opts.minibatch_size, opts.val_size, opts.test_size, opts.data_type, opts.epoch_lim)
-
-# grab a batch
-dh.cur_iteration = 0
-b = dh.nextBatch()
-
+    # grab a batch
+    dh.cur_iteration = 0
+    b = dh.nextBatch()
+    if test_mode:
+        opts.imageDim = 5
+        for x in b:
+            x[0] = x[0][:opts.imageDim]
+            x[0] = x[0] * mult_factor
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 
 if test_mode:
     opts.imageDim = 5
-    for x in b:
-        x[0] = x[0][:opts.imageDim]
-        x[0] = x[0] * mult_factor
-
 
 net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg)
 
@@ -171,17 +170,17 @@ for i,j,k in zip(names, grads, comp_grads):
 
 for k in sorted(gradD.keys()):
     try:
-        a, b = gradD[k]
+        a, cb = gradD[k]
         a = a.squeeze()
-        b = b.squeeze()
-        osz = [a.shape, b.shape]
-        error = rel_error(a,b)
-        print('%s : %g [%s vs %s]'%(k, error, str(osz[0]), str(osz[1])))
+        cb = cb.squeeze()
+        osz = [a.shape, cb.shape]
+        error = rel_error(a,cb)
+        print('%s : %g [%s vs %s]'%(k, error * (error > 1e-5), str(osz[0]), str(osz[1])))
     except:
         a = np.array(gradD[k][0].values())
-        b = np.array(gradD[k][1].values())
+        cb = np.array(gradD[k][1].values())
         a = a.squeeze()
-        b = b.squeeze()
-        osz = [a.shape, b.shape]
-        error = rel_error(a,b)
-        print('%s : %g [%s vs %s]'%(k, error, str(osz[0]), str(osz[1])))
+        cb = cb.squeeze()
+        osz = [a.shape, cb.shape]
+        error = rel_error(a,cb)
+        print('%s : %g [%s vs %s]'%(k, error * (error > 1e-5), str(osz[0]), str(osz[1])))
