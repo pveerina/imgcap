@@ -3,12 +3,13 @@ import random
 
 class SGD:
 
-    def __init__(self,model,alpha=1e-2,dh=None,
-                 optimizer='sgd'):
+    def __init__(self, model, modelfilename, alpha=1e-2,dh=None, optimizer='sgd', logfile=None):
         # dh = instance of data handler
         self.model1 = model
         self.model2 = model.topLayer
         self.dh = dh
+        self.logfile = logfile
+        self.model_filename = modelfilename
         print "initializing SGD"
         assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
@@ -33,6 +34,7 @@ class SGD:
         """
         print "running SGD"
         mbdata = self.dh.nextBatch()
+        prev_megabatch = 0
         while mbdata != None:
             self.it = self.dh.cur_iteration
             cost, _ = self.model1.costAndGrad(mbdata)
@@ -90,6 +92,19 @@ class SGD:
 
             self.costt.append(cost)
             if self.it%1 == 0:
-                print "Iter %d : Cost=%.4f, ExpCost=%.4f."%(self.it,cost,self.expcost[-1])
+                msg = "Iter %d : Cost=%.4f, ExpCost=%.4f."%(self.it,cost,self.expcost[-1])
+                print msg
+                if self.logfile is not None:
+                    with open(self.logfile, "a") as logfile:
+                        logfile.write(msg + "\n")
             mbdata = self.dh.nextBatch()
+            if self.dh.cur_megabatch != prev_megabatch:
+                # checkpoint
+                prev_megabatch = self.dh.cur_megabatch
+                self.save_checkpoint(""+prev_megabatch)
+
+
+    def save_checkpoint(self, checkpoint_name):
+        param_dict = dict(zip(self.model1.names, self.model1.stack) + zip(self.model2.names, self.model2.stack))
+        np.savez(self.model_filename%checkpoint_number, **param_dict)
 
