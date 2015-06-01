@@ -52,7 +52,7 @@ model_filename = "models/m_" + datetime.now().strftime("%m%d_%H%M%S") + "_%s"
 log_filename = "logs/m_" + datetime.now().strftime("%m%d_%H%M%S.log")
 shutil.copyfile("conf.py", model_filename%"config")
 
-sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename)
+sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename, test_inc=opts.test_inc)
 
 #sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
 

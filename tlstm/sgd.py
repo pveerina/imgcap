@@ -3,7 +3,7 @@ import random
 
 class SGD:
 
-    def __init__(self, model, modelfilename, alpha=1e-2,dh=None, optimizer='sgd', logfile=None):
+    def __init__(self, model, modelfilename, alpha=1e-2,dh=None, optimizer='sgd', logfile=None, test_inc=1000):
         # dh = instance of data handler
         self.model1 = model
         self.model2 = model.topLayer
