@@ -73,6 +73,7 @@ class Twin:
 
 		if params is not None:
 			for i, name in enumerate(self.names):
+				self.stack[i] *= 0
 				self.stack[i] += params[name]
 
 	def clearGradients(self):
