@@ -176,7 +176,7 @@ class TLSTM:
 
         if params is not None:
             for i, name in enumerate(self.names):
-                self.stack[i] = params[name]
+                self.stack[i] += params[name]
 
 
     def costAndGrad(self,mbdata,test=False, testCost=False):
