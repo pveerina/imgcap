@@ -263,7 +263,7 @@ class TLSTM:
             newmbdata.append((imgvec, tree.root.hActs2))
 
         if test:
-            cost = self.topLayer.costAndGrad(newmbdata, test=True, testCost=testCost)
+            cost, xs, ys = self.topLayer.costAndGrad(newmbdata, test=True, testCost=testCost)
         else:
             if testCost:
                 cost, error = self.topLayer.costAndGrad(newmbdata, testCost=testCost)
@@ -295,7 +295,7 @@ class TLSTM:
             cost += (self.rho/2)*np.sum(self.Vu[j]**2)
 
         if test:
-            return cost, total
+            return cost, total, xs, ys
 
          # Back prop each tree in minibatch
         for n, (_, tree) in enumerate(mbdata):

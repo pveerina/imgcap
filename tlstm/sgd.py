@@ -37,7 +37,15 @@ class SGD:
         print "running SGD"
         mbdata = self.dh.nextBatch()
         prev_megabatch = 0
+        all_iter = 0
+        dev_costs = []
+        dev_scores = []
         while mbdata != None:
+            all_iter += 1
+            if not all_iter % test_inc:
+                devco, devsco = test(self.model1, dh)
+                dev_costs.append(devco)
+                dev_costs.append(devsco)
             self.it = self.dh.cur_iteration
             cost, _ = self.model1.costAndGrad(mbdata)
             grad1 = self.model1.grads

@@ -15,7 +15,7 @@ from copy import deepcopy
 import cProfile
 
 
-test_mode = True
+test_mode = False
 net_to_test = 'both'
 
 if test_mode:
@@ -65,6 +65,9 @@ net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./
 
 net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
 
+from tlstm.tlstm_theano import TLSTM
+net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
+
 if test_mode:
     net1.L = net1.L[:,:opts.wvecDim] * mult_factor
     net1.stack[0] = net1.L
@@ -86,4 +89,56 @@ def iterate_costAndGrad(n):
         net1.costAndGrad(b)
 
 print 'Beginning profile'
-cProfile.run('iterate_costAndGrad(10)')
+
+#cProfile.run('iterate_costAndGrad(10)')
+
+# the T-LSTM's forward/backward props take by far the longest, so let's
+# try profiling them individually
+#from line_profiler import LineProfiler
+#profiler = LineProfiler()
+#profiler.add_function(net1.forwardProp)
+#profiler.enable_by_count()
+
+
+
+
+
+
+try:
+    from line_profiler import LineProfiler
+
+    def do_profile(follow=[]):
+        def inner(func):
+            def profiled_func(*args, **kwargs):
+                try:
+                    profiler = LineProfiler()
+                    profiler.add_function(func)
+                    for f in follow:
+                        profiler.add_function(f)
+                    profiler.enable_by_count()
+                    return func(*args, **kwargs)
+                finally:
+                    profiler.print_stats()
+            return profiled_func
+        return inner
+
+except ImportError:
+    def do_profile(follow=[]):
+        "Helpful if you accidentally leave in production!"
+        def inner(func):
+            def nothing(*args, **kwargs):
+                return func(*args, **kwargs)
+            return nothing
+        return inner
+
+@do_profile(follow=[net1.forwardProp])
+def cab(b):
+    net1.costAndGrad(b)
+
+cab(b)
+
+@do_profile(follow=[net1.backProp])
+def cab(b):
+    net1.costAndGrad(b)
+
+cab(b)

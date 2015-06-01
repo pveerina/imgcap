@@ -216,7 +216,7 @@ class Twin:
 		cost, image_deltas, sentence_deltas = \
 		self.newCostFunction(imageActs, sentActs)
 		if test:
-			return cost
+			return cost, np.array(sentActs), np.array(imageActs)
 
 		img_input_grads = []
 		sentence_input_grads = []

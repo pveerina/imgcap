@@ -121,9 +121,25 @@ class DataHandler():
 
         self.megabatch_queue = []
         self.minibatch_queue = []
-    def nextBatch(self):
+        self.testing = False
+        self.test_megabatch_queue = []
+        self.test_minibatch_queue = []
+    def nextBatch(self, test=False):
         # yields the next batch
-        if not len(self.minibatch_queue) and not len(self.megabatch_queue):
+        if test and not self.testing:
+            self.testing = True
+            self.testEpoch()
+        if self.testing:
+            megabatch_queue = self.test_megabatch_queue
+            minibatch_queue = self.test_minibatch_queue
+        else:
+            megabatch_queue = self.megabatch_queue
+            minibatch_queue = self.minibatch_queue
+        if not len(minibatch_queue) and not len(megabatch_queue):
+            if self.testing:
+                print 'Test Epoch complete'
+                self.testing = False
+                return -1
             if self.cur_epoch == self.epoch_lim:
                 print 'Done'
                 return None
@@ -131,10 +147,15 @@ class DataHandler():
             self.cur_megabatch = 0
             self.megabatchAdvance()
             self.cur_iteration = 0
-        elif not len(self.minibatch_queue):
+        elif not len(minibatch_queue):
             self.megabatchAdvance()
         self.cur_iteration += 1
-        return self.minibatch_queue.pop(0)
+        return minibatch_queue.pop(0)
+    def testEpoch(self):
+        print 'Beginning test epoch'
+        np.random.shuffle(self.val_ims)
+        self.test_megabatch_queue = [x for x in chunks(self.val_ims, self.megabatch_size)]
+        print '\t%i megabatches'%(len(self.test_megabatch_queue))
     def epochAdvance(self):
         self.cur_epoch += 1
         print 'Beginning epoch %i'%self.cur_epoch
@@ -142,6 +163,9 @@ class DataHandler():
         self.megabatch_queue = [x for x in chunks(self.train_ims, self.megabatch_size)]
         print '\t%i megabatches'%(len(self.megabatch_queue))
     def megabatchAdvance(self):
+        if self.testing:
+            self.testMegabatch()
+            return
         print 'Loading megabatch data'
         self.cur_megabatch += 1
         img_dat = dict()
@@ -174,5 +198,37 @@ class DataHandler():
             sample = [[img_dat[x], tree_dat[x].pop(0)] for x in sample]
             self.minibatch_queue.append(sample)
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)
+    def testMegabatch(self):
+        print 'Loading test megabatch data'
+        img_dat = dict()
+        tree_dat = dict()
+        tree_rem = dict()
+        cur_queue = self.test_megabatch_queue.pop(0)
+        for i in cur_queue:
+            tree_rem[i] = self.data_dict[i]['n_desc']
+            vgg16 = self.img_feats['vgg16'][self.data_dict[i]['vgg16']]
+            vgg19 = self.img_feats['vgg19'][self.data_dict[i]['vgg19']]
+            imidx = self.data_dict[i]['img_feat_idx']
+            if self.data_type == 'both':
+                img_dat[i] = np.hstack((vgg16[imidx,:], vgg19[imidx,:]))
+            elif self.data_type == 'vgg16':
+                img_dat[i] = vgg16[imidx,:]
+            elif self.data_type == 'vgg19':
+                img_dat[i] = vgg19[imidx,:]
+            tree_dat[i] = []
+            for curtreeIDX in self.data_dict[i]['desc_idx']:
+                tree_dat[i].append(Tree(self.trees[curtreeIDX]))
+            # shuffle the trees
+            np.random.shuffle(tree_dat[i])
+        print 'Constructing schedule for this testing megabatch'
+        while len(tree_rem) >= self.minibatch_size:
+            sample = np.random.choice(tree_rem.keys(), self.minibatch_size, replace=False)
+            for k in sample:
+                tree_rem[k]-=1
+                if tree_rem[k] == 0:
+                    tree_rem.pop(k, None)
+            sample = [[img_dat[x], tree_dat[x].pop(0)] for x in sample]
+            self.test_minibatch_queue.append(sample)
+        print 'Beginning testing megabatch'
 
 
