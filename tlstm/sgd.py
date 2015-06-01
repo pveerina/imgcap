@@ -49,13 +49,13 @@ class SGD:
             mbdata = self.dh.nextBatch()
             prev_megabatch = 0
             all_iter = 0
-            dev_costs = []
-            dev_scores = []
+            self.dev_costs = []
+            self.dev_scores = []
             while mbdata != None:
                 if not all_iter % self.test_inc:
                     devco, devsco = test(self.model1, self.dh)
-                    dev_costs.append(devco)
-                    dev_costs.append(devsco)
+                    self.dev_costs.append(devco)
+                    self.dev_scores.append(devsco)
                 all_iter += 1
                 self.it = self.dh.cur_iteration
                 cost, _ = self.model1.costAndGrad(mbdata)
@@ -122,4 +122,7 @@ class SGD:
     def save_checkpoint(self, checkpoint_name):
         param_dict = dict(zip(self.model1.names, self.model1.stack) + zip(self.model2.names, self.model2.stack))
         np.savez(self.model_filename%checkpoint_name, **param_dict)
-
+        with open(self.model_filename%'dev_scores','w') as f:
+            f.write(str(self.dev_scores))
+        with open(self.model_filename%'dev_costs','w') as f:
+            f.write(str(self.dev_costs))
