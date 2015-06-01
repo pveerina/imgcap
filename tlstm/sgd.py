@@ -1,6 +1,12 @@
 import numpy as np
 import random
 from testNet import test
+import time
+
+def printTime(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return "%dh:%02dm:%02ds" % (h, m, s)
 
 class SGD:
 
@@ -37,6 +43,7 @@ class SGD:
         Runs stochastic gradient descent with model as objective.
         """
         print "running SGD"
+        start = time.time()
         mbdata = self.dh.nextBatch()
         prev_megabatch = 0
         all_iter = 0
@@ -102,8 +109,12 @@ class SGD:
             self.model2.updateParams(scale,update2)
 
             self.costt.append(cost)
+            # compute time remaining
+            cur = time.time()
+            timePerIter = (cur-start) * 1./all_iter
+            timeRem = timePerIter * len(self.dh.minibatch_queue)
             if self.it%1 == 0:
-                msg = "Iter %d Megabatch %d Epoch %d: Cost=%7.4f, ExpCost=%7.4f."%(self.it,self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
+                msg = "Iter:%6d (rem:%6d, %s to next megabatch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
                 print msg
                 if self.logfile is not None:
                     with open(self.logfile, "a") as logfile:
