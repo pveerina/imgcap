@@ -112,9 +112,9 @@ class SGD:
             # compute time remaining
             cur = time.time()
             timePerIter = (cur-start) * 1./all_iter
-            timeRem = timePerIter * len(self.dh.minibatch_queue)
+            timeRem = timePerIter * (self.dh.batchPerEpoch - self.it)
             if self.it%1 == 0:
-                msg = "Iter:%6d (rem:%6d, %s to next megabatch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
+                msg = "Iter:%6d (rem:%6d, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
                 print msg
                 if self.logfile is not None:
                     with open(self.logfile, "a") as logfile:
