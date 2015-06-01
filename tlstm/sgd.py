@@ -39,93 +39,87 @@ class SGD:
         self.expcost = []
 
     def run(self):
-        """
-        Runs stochastic gradient descent with model as objective.
-        """
-        print "running SGD"
-        start = time.time()
-        mbdata = self.dh.nextBatch()
-        prev_megabatch = 0
-        all_iter = 0
-        dev_costs = []
-        dev_scores = []
-        while mbdata != None:
-            if not all_iter % self.test_inc:
-                devco, devsco = test(self.model1, self.dh)
-                dev_costs.append(devco)
-                dev_costs.append(devsco)
-            all_iter += 1
-            self.it = self.dh.cur_iteration
-            cost, _ = self.model1.costAndGrad(mbdata)
-            grad1 = self.model1.grads
-            grad2 = self.model2.grads
-            if np.isfinite(cost):
-                if self.it > 1:
-                    self.expcost.append(.01*cost + .99*self.expcost[-1])
-                else:
-                    self.expcost.append(cost)
-            if self.optimizer == 'sgd':
-                update1 = grad1
-                update2 = grad2
-                scale = -self.alpha
-
-            elif self.optimizer == 'adagrad':
-                ## ADAGRAD CURRENTLY DOESN'T WORK, SINCE THE GRADIENTS IN
-                ## BOTH NETWORKS ARE REPRESENTED AS LISTS RATHER THAN
-                ## MATRICES
-                #
-                # Perform update for network 1 first
-                #
-                # for gt1, g1 in zip(self.gradt[1:], grad1[1:]):
-                #     if type(g1) == list:
-                #         for gt2, g2 in zip(gt1, g1):
-                #             if type(g2) == list:
-                #                 for gt3, g3 in zip(gt2, g2):
-
-                self.gradt1[1:] = [gt+g**2
-                        for gt,g in zip(self.gradt1[1:],grad1[1:])]
-                update =  [g*(1./np.sqrt(gt))
-                        for gt,g in zip(self.gradt1[1:],grad1[1:])]
-                # handle dictionary separately
-                dL = grad1[0]
-                dLt = self.gradt1[0]
-                for j in dL.iterkeys():
-                    dLt[j] = dLt[j,:] + dL[j]**2
-                    dL[j] = dL[j] * (1./np.sqrt(dLt[j,:]))
-                update1 = [dL] + update
-                #
-                # Now perform it for network 2
-                #
-                self.gradt2 = [gt+g**2
-                        for gt,g in zip(self.gradt2,grad2)]
-                update2 =  [g*(1./np.sqrt(gt))
-                        for gt,g in zip(self.gradt2,grad2)]
-                # handle dictionary separately
-
-                scale = -self.alpha
-
-            # update params
-            self.model1.updateParams(scale,update1,log=False)
-            self.model2.updateParams(scale,update2)
-
-            self.costt.append(cost)
-            # compute time remaining
-            cur = time.time()
-            timePerIter = (cur-start) * 1./all_iter
-            timeRem = timePerIter * (self.dh.batchPerEpoch - self.it)
-            if self.it%1 == 0:
-                msg = "Iter:%6d (rem:%6d, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
-                print msg
-                if self.logfile is not None:
-                    with open(self.logfile, "a") as logfile:
-                        logfile.write(msg + "\n")
+        try:
+            """
+            Runs stochastic gradient descent with model as objective.
+            """
+            print "running SGD"
+            start = time.time()
+            self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
             mbdata = self.dh.nextBatch()
-            if self.dh.cur_megabatch != prev_megabatch:
-                # checkpoint
-                prev_megabatch = self.dh.cur_megabatch
-                self.save_checkpoint("%d"%prev_megabatch)
+            prev_megabatch = 0
+            all_iter = 0
+            dev_costs = []
+            dev_scores = []
+            while mbdata != None:
+                if not all_iter % self.test_inc:
+                    devco, devsco = test(self.model1, self.dh)
+                    dev_costs.append(devco)
+                    dev_costs.append(devsco)
+                all_iter += 1
+                self.it = self.dh.cur_iteration
+                cost, _ = self.model1.costAndGrad(mbdata)
+                grad1 = self.model1.grads
+                grad2 = self.model2.grads
+                if np.isfinite(cost):
+                    if self.it > 1:
+                        self.expcost.append(.01*cost + .99*self.expcost[-1])
+                    else:
+                        self.expcost.append(cost)
+                if self.optimizer == 'sgd':
+                    update1 = grad1
+                    update2 = grad2
+                    scale = -self.alpha
+
+                elif self.optimizer == 'adagrad':
+
+                    self.gradt1[1:] = [gt+g**2
+                            for gt,g in zip(self.gradt1[1:],grad1[1:])]
+                    update =  [g*(1./np.sqrt(gt))
+                            for gt,g in zip(self.gradt1[1:],grad1[1:])]
+                    # handle dictionary separately
+                    dL = grad1[0]
+                    dLt = self.gradt1[0]
+                    for j in dL.iterkeys():
+                        dLt[j] = dLt[j,:] + dL[j]**2
+                        dL[j] = dL[j] * (1./np.sqrt(dLt[j,:]))
+                    update1 = [dL] + update
+                    #
+                    # Now perform it for network 2
+                    #
+                    self.gradt2 = [gt+g**2
+                            for gt,g in zip(self.gradt2,grad2)]
+                    update2 =  [g*(1./np.sqrt(gt))
+                            for gt,g in zip(self.gradt2,grad2)]
+                    # handle dictionary separately
+
+                    scale = -self.alpha
+
+                # update params
+                self.model1.updateParams(scale,update1,log=False)
+                self.model2.updateParams(scale,update2)
+
+                self.costt.append(cost)
+                # compute time remaining
+                cur = time.time()
+                timePerIter = (cur-start) * 1./all_iter
+                timeRem = timePerIter * (self.dh.batchPerEpoch - self.it)
+                if self.it%1 == 0:
+                    msg = "Iter:%6d (rem:%6d, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
+                    print msg
+                    if self.logfile is not None:
+                        with open(self.logfile, "a") as logfile:
+                            logfile.write(msg + "\n")
+                mbdata = self.dh.nextBatch()
+                if self.dh.cur_megabatch != prev_megabatch:
+                    # checkpoint
+                    prev_megabatch = self.dh.cur_megabatch
+                    self.save_checkpoint("%d"%prev_megabatch)
+        except KeyboardInterrupt as ke:
+            self.save_checkpoint('_INTERRUPT')
 
 
     def save_checkpoint(self, checkpoint_name):
         param_dict = dict(zip(self.model1.names, self.model1.stack) + zip(self.model2.names, self.model2.stack))
         np.savez(self.model_filename%checkpoint_name, **param_dict)
+

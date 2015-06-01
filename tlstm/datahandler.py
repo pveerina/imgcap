@@ -125,6 +125,13 @@ class DataHandler():
         self.test_megabatch_queue = []
         self.test_minibatch_queue = []
         self.batchPerEpoch = None
+    def saveSets(self, folder):
+        with open(os.path.join(folder, 'train'),'w') as f:
+            f.write(str(self.train_ims))
+        with open(os.path.join(folder, 'val'),'w') as f:
+            f.write(str(self.val_ims))
+        with open(os.path.join(folder, 'test'),'w') as f:
+            f.write(str(self.test_ims))
     def nextBatch(self, test=False):
         # yields the next batch
         if test and not self.testing:

@@ -12,6 +12,7 @@ import shutil
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 from tlstm import sgd as optimizer
+import os
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -39,18 +40,29 @@ else:
 
 
 # instantiate the second 'layer'
-net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0, params=params)
+net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), opts.reg, params=params)
 #net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./(opts.mbSize*(opts.mbSize-1)), 0)
 
 # instantiate the first 'layer'
-net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root, params=params)
+net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), opts.rho, net2, root=opts.root, params=params)
 
 #net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2)
 
 # instantiate the SGD
-model_filename = "models/m_" + datetime.now().strftime("%m%d_%H%M%S") + "_%s"
-log_filename = "logs/m_" + datetime.now().strftime("%m%d_%H%M%S.log")
-shutil.copyfile("conf.py", model_filename%"config")
+pfxm = "models/m_%s"%datetime.now().strftime("%m%d_%H%M%S")
+try:
+    os.mkdir(pfxm)
+except Exception, e:
+    pass
+pfxL = "logs/m_%s"%datetime.now().strftime("%m%d_%H%M%S")
+try:
+    os.mkdir(pfxL)
+except Exception, e:
+    pass
+
+model_filename = os.path.join(pfxm, 'megabatch_%s')
+log_filename = os.path.join(pfxL, 'megabatch_%s')
+shutil.copyfile("conf.py", os.path.join(pfxm, 'config'))
 
 sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename, test_inc=opts.test_inc)
 
