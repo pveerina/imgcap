@@ -482,14 +482,14 @@ class TLSTM:
             in_hl = error[3:3+self.paramDim]
             in_hr = error[3+self.paramDim:3+2*self.paramDim]
             in_cc = error[3+2*self.paramDim]
-            if node == node.parent.left:
+            if node in node.parent.left:
                 idx = min(node.idx, self.paramDim-1)
                 error_at_h += np.dot(self.Uo[idx].T, in_ho) + np.dot(self.Ui[idx].T, in_hi) + np.dot(self.Uu[idx].T, in_hu)
                 for j in range(self.paramDim):
                     error_at_h += np.dot(self.Ul[j][idx].T, in_hl[j])
                     error_at_h += np.dot(self.Ur[j][idx].T, in_hr[j])
                 error_at_c += np.dot(np.diag(self.l[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
-            if node == node.parent.right:
+            if node in node.parent.right:
                 idx = min(node.idx, self.paramDim-1)
                 error_at_h += np.dot(self.Vo[idx].T, in_ho) + np.dot(self.Vi[idx].T, in_hi) + np.dot(self.Vu[idx].T, in_hu)
                 for j in range(self.paramDim):
