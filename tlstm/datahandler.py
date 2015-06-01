@@ -149,7 +149,8 @@ class DataHandler():
             self.cur_iteration = 0
         elif not len(minibatch_queue):
             self.megabatchAdvance()
-        self.cur_iteration += 1
+        if not self.testing:
+            self.cur_iteration += 1
         return minibatch_queue.pop(0)
     def testEpoch(self):
         print 'Beginning test epoch'

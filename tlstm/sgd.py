@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from testNet import test
 
 class SGD:
 
@@ -17,6 +18,7 @@ class SGD:
         self.it = 0
         self.alpha = alpha # learning rate
         self.optimizer = optimizer
+        self.test_inc = test_inc
         if self.optimizer == 'sgd':
             print "Using sgd.."
         elif self.optimizer == 'adagrad':
@@ -41,11 +43,11 @@ class SGD:
         dev_costs = []
         dev_scores = []
         while mbdata != None:
-            all_iter += 1
-            if not all_iter % test_inc:
-                devco, devsco = test(self.model1, dh)
+            if not all_iter % self.test_inc:
+                devco, devsco = test(self.model1, self.dh)
                 dev_costs.append(devco)
                 dev_costs.append(devsco)
+            all_iter += 1
             self.it = self.dh.cur_iteration
             cost, _ = self.model1.costAndGrad(mbdata)
             grad1 = self.model1.grads
