@@ -1,6 +1,6 @@
 from __future__ import print_function
-%load_ext autoreload
-%autoreload 2
+#%load_ext autoreload
+#%autoreload 2
 
 import numpy as np
 import sys
