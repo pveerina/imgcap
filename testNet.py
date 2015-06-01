@@ -5,7 +5,7 @@ from __future__ import print_function
 import numpy as np
 import sys
 
-def test(net, dh, opts):
+def test(net, dh):
     # accepts a neural net, a data handler, and the options. Returns
     # two measure of accuracy
     b = dh.nextBatch(test=True)

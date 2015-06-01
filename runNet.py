@@ -12,6 +12,7 @@ import shutil
 from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 from tlstm import sgd as optimizer
+from test import test
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0

@@ -66,7 +66,7 @@ net2 = Twin(opts.sentenceDim, opts.imageDim, opts.sharedDim, opts.numLayers, 1./
 net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
 
 from tlstm.tlstm_theano import TLSTM
-net1 = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
+net1b = TLSTM(opts.wvecDim, opts.middleDim, opts.paramDim, opts.numWords, opts.mbSize, 1./(opts.mbSize*(opts.mbSize-1)), 0, net2, root=opts.root)
 
 if test_mode:
     net1.L = net1.L[:,:opts.wvecDim] * mult_factor
@@ -88,9 +88,15 @@ def iterate_costAndGrad(n):
         print i
         net1.costAndGrad(b)
 
+def iterate_costAndGrad2(n):
+    for i in range(n):
+        print i
+        net1b.costAndGrad(b)
+
 print 'Beginning profile'
 
-#cProfile.run('iterate_costAndGrad(10)')
+cProfile.run('iterate_costAndGrad(10)')
+cProfile.run('iterate_costAndGrad2(10)')
 
 # the T-LSTM's forward/backward props take by far the longest, so let's
 # try profiling them individually
