@@ -124,6 +124,7 @@ class DataHandler():
         self.testing = False
         self.test_megabatch_queue = []
         self.test_minibatch_queue = []
+        self.batchPerEpoch = None
     def nextBatch(self, test=False):
         # yields the next batch
         if test and not self.testing:
@@ -149,7 +150,8 @@ class DataHandler():
             self.cur_iteration = 0
         elif not len(minibatch_queue):
             self.megabatchAdvance()
-        self.cur_iteration += 1
+        if not self.testing:
+            self.cur_iteration += 1
         return minibatch_queue.pop(0)
     def testEpoch(self):
         print 'Beginning test epoch'
@@ -197,6 +199,8 @@ class DataHandler():
                     tree_rem.pop(k, None)
             sample = [[img_dat[x], tree_dat[x].pop(0)] for x in sample]
             self.minibatch_queue.append(sample)
+        if self.batchPerEpoch == None:
+            self.batchPerEpoch = len(self.minibatch_queue) * (len(self.megabatch_queue) + 1)
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)
     def testMegabatch(self):
         print 'Loading test megabatch data'

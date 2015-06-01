@@ -126,6 +126,9 @@ class Twin:
 	    ns1 = s1
 	    ns2 = s2
 	    cost = np.sum(s1)+np.sum(s2)
+	    if abs(cost - 2) < 1e-5:
+	    	import pdb
+	    	pdb.set_trace()
 	    if test:
 	    	return cost
 	    s1t = s1 > 0
