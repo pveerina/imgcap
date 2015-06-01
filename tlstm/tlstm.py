@@ -426,7 +426,7 @@ class TLSTM:
                 sr.append(np.zeros((self.middleDim, 1)))
             for j in range(self.paramDim):
                 idx1 = j
-                sl[idx1] += temp
+                sr[idx1] += temp
                 for k in node.left:
                     idx2 = min(k.idx, self.paramDim-1)
                     sr[idx1] += np.dot(self.Ur[idx1][idx2], k.hActs2)
