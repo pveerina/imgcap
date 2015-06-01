@@ -18,10 +18,10 @@ def test(net, dh):
         res = np.argmax(dp)
         score2 = np.sum(np.argmax(dp,1)==np.array(range(len(dp)))) * 1./len(dp)
         if len(dh.test_minibatch_queue):
-            print('%i rem cost:%g score:%g'%(len(dh.test_minibatch_queue), cost, score2), end="\r")
+            print('%5i rem cost:%6.3f score:%g'%(len(dh.test_minibatch_queue), cost, score2), end="\r")
             sys.stdout.flush()
         else:
-            print('%i rem cost:%6.3f score:%g'%(len(dh.test_minibatch_queue), cost, score2))
+            print('%5i rem cost:%6.3f score:%g'%(len(dh.test_minibatch_queue), cost, score2))
             sys.stdout.flush()
         costs.append(cost)
         scores.append(score2)
