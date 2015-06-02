@@ -9,10 +9,14 @@ import optparse
 import cPickle as pickle
 import conf as opts
 import shutil
-from tlstm.tlstm import TLSTM
 from tlstm.twin import Twin
 from tlstm import sgd as optimizer
 import os
+
+if opts.childSum:
+    from tlstm.tlstm import TLSTM_childSum as TLSTM
+else:
+    from tlstm.tlstm import TLSTM
 
 np.seterr(all='raise')
 
