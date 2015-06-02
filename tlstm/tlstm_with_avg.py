@@ -381,45 +381,45 @@ class TLSTM:
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			si += np.dot(self.Ui[idx], j.hActs2/node.numLeft)
+		    si += np.dot(self.Ui[idx], j.hActs2/node.numLeft)
 		else:
-			si += np.dot(self.Ui[idx], j.hActs2)
+		    si += np.dot(self.Ui[idx], j.hActs2)
             for j in node.right:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			si += np.dot(self.Vi[idx], j.hActs2/node.numRight)
+		    si += np.dot(self.Vi[idx], j.hActs2/node.numRight)
 		else:
-			si += np.dot(self.Vi[idx], j.hActs2)
+		    si += np.dot(self.Vi[idx], j.hActs2)
             self.i = sigmoid(si)
 
             su = np.dot(self.Wu, x)+np.reshape(self.bu, (self.middleDim, 1))
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			su += np.dot(self.Uu[idx], j.hActs2/node.numLeft)
+		    su += np.dot(self.Uu[idx], j.hActs2/node.numLeft)
 		else:
-			su += np.dot(self.Uu[idx], j.hActs2)
+		    su += np.dot(self.Uu[idx], j.hActs2)
             for j in node.right:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			su += np.dot(self.Vu[idx], j.hActs2/node.numRight)
+		    su += np.dot(self.Vu[idx], j.hActs2/node.numRight)
 		else:
-			su += np.dot(self.Vu[idx], j.hActs2)
+		    su += np.dot(self.Vu[idx], j.hActs2)
             self.u = np.tanh(su)
 
             so = np.dot(self.Wo, x)+np.reshape(self.bo, (self.middleDim, 1))
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			so += np.dot(self.Uo[idx], j.hActs2/node.numLeft)
+		    so += np.dot(self.Uo[idx], j.hActs2/node.numLeft)
 		else:
-			so += np.dot(self.Uo[idx], j.hActs2)
+		    so += np.dot(self.Uo[idx], j.hActs2)
             for j in node.right:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			so += np.dot(self.Vo[idx], j.hActs2/node.numRight)
+		    so += np.dot(self.Vo[idx], j.hActs2/node.numRight)
 		else:
-			so += np.dot(self.Vo[idx], j.hActs2)
+		    so += np.dot(self.Vo[idx], j.hActs2)
             self.o = sigmoid(so)
 
             self.l = []
@@ -473,15 +473,15 @@ class TLSTM:
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			node.hActs1 += np.multiply(self.l[idx], j.hActs1/node.numLeft)
+		    node.hActs1 += np.multiply(self.l[idx], j.hActs1/node.numLeft)
 		else:
-			node.hActs1 += np.multiply(self.l[idx], j.hActs1)
+		    node.hActs1 += np.multiply(self.l[idx], j.hActs1)
             for j in node.right:
                 idx = min(j.idx, self.paramDim-1)
 		if idx == self.paramDim-1:
-			node.hActs1 += np.multiply(self.r[idx], j.hActs1/node.numRight)
+		    node.hActs1 += np.multiply(self.r[idx], j.hActs1/node.numRight)
 		else:
-			node.hActs1 += np.multiply(self.r[idx], j.hActs1)
+		    node.hActs1 += np.multiply(self.r[idx], j.hActs1)
         node.hActs2 = np.multiply(self.o, np.tanh(node.hActs1))
         #node.probs = softmax(node.hActs2.flatten())
         #guess.append(np.argmax(node.probs))
@@ -529,8 +529,8 @@ class TLSTM:
                     error_at_h += np.dot(self.Ur[j][idx].T, in_hr[j])
                 error_at_c += np.dot(np.diag(self.l[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
 		if idx == self.paramDim-1:
-			error_at_h = error_at_h/node.parent.numLeft
-			error_at_c = error_at_c/node.parent.numLeft
+		    error_at_h = error_at_h/node.parent.numLeft
+		    error_at_c = error_at_c/node.parent.numLeft
             if node in node.parent.right:
                 idx = min(node.idx, self.paramDim-1)
                 error_at_h += np.dot(self.Vo[idx].T, in_ho) + np.dot(self.Vi[idx].T, in_hi) + np.dot(self.Vu[idx].T, in_hu)
@@ -539,8 +539,8 @@ class TLSTM:
                     error_at_h += np.dot(self.Vr[j][idx].T, in_hr[j])
                 error_at_c += np.dot(np.diag(self.r[idx].flatten()), in_cc) + np.dot(dh_dc, error_at_h)
 		if idx == self.paramDim-1:
-			error_at_h = error_at_h/node.parent.numRight
-			error_at_c = error_at_c/node.parent.numRight
+		    error_at_h = error_at_h/node.parent.numRight
+		    error_at_c = error_at_c/node.parent.numRight
         # Error passed to children
         # o
         do_dso = np.diag(np.multiply(self.o, 1-self.o).flatten())
