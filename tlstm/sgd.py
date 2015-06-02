@@ -65,7 +65,7 @@ class SGD:
                 grad1 = self.model1.grads
                 grad2 = self.model2.grads
                 if self.it > 1:
-                    if cost > 6*self.expcost[-1]:
+                    if cost > 10*self.expcost[-1]:
                         print 'Unusual cost observed, creating checkpoint...'
                         self.save_checkpoint('_UNUSUALCOST_iter_%i'%all_iter)
                         self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
@@ -125,10 +125,12 @@ class SGD:
                     prev_megabatch = self.dh.cur_megabatch
                     self.save_checkpoint("%d_epoch%i"%(prev_megabatch, self.dh.cur_epoch))
         except KeyboardInterrupt as ke:
+            print 'KEYBOARD INTERRUPT'
             if self.save_on_interrupt:
                 self.save_checkpoint('_INTERRUPT')
                 self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
         except FloatingPointError as fe:
+            print 'FLOATING POINT ERROR'
             self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
             self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
 
