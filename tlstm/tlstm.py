@@ -2,7 +2,6 @@ import numpy as np
 import collections
 import pdb
 import os
-np.seterr(under='warn')
 
 # This is a Tree-structured LSTM
 # You must update the forward and backward propogation functions of this file.
@@ -18,7 +17,7 @@ def make_onehot(index, length):
         y[index] = 1
         return y
 
-class TLSTM:
+class TLSTM_childSum:
 
     def __init__(self,wvecDim, middleDim, paramDim, numWords,mbSize=30, scale=1, rho=1e-4, topLayer = None, root=None, params=None):
         self.wvecDim = wvecDim
