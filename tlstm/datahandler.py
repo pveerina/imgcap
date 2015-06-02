@@ -145,12 +145,17 @@ class DataHandler():
         self.train_ims = eval(open(os.path.join(folder, 'train')).read())
         self.val_ims = eval(open(os.path.join(folder, 'val')).read())
         self.test_ims = eval(open(os.path.join(folder, 'test')).read())
-        self.minibatch_seq = eval(open(os.path.join(folder, 'minibatches')).read())
+        minibatch_seq = eval(open(os.path.join(folder, 'minibatches')).read())
         print 'Pruning seen minibatches -- this may take a while'
-        for n in self.minibatch_seq:
+        for cnt,n in enumerate(minibatch_seq):
             m = self.nextBatch()
-            if m != n:
-                print 'Problem with minibatches -- they dont correspond!'
+            if self.minibatch_seq[-1] != n:
+                print 'Error encountered.'
+                return
+                import pdb
+                pdb.set_trace()
+            assert self.minibatch_seq[-1] == n, 'Minibatches stopped correspondence at minibatch %i'%(cnt)
+            print 'Pruned %i minibatches so far...'%cnt
         print 'Done, model has been restored to most recent snapshot'
     def nextBatch(self, test=False):
         # yields the next batch
