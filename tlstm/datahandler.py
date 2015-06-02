@@ -38,7 +38,7 @@ def chunks(l, n):
         yield l[i:i+n]
 
 class DataHandler():
-    def __init__(self, root=None, megabatch_size=10000, minibatch_size=10, val_size=.05, test_size=.05, data_type='vgg16', epoch_lim=10):
+    def __init__(self, root=None, megabatch_size=10000, minibatch_size=10, val_size=.05, test_size=.05, data_type='vgg16', epoch_lim=10, resume=False, folder=None):
 
         if root == None:
             # assume you're running from the lstm directory
@@ -75,7 +75,7 @@ class DataHandler():
         self.img_feats = img_feats
 
         print 'Loading trees'
-        self.trees = [x.split('\t')[1] for x in open(treefile, 'r').read().strip().split('\n')]
+        self.trees = [x.split('\t') for x in open(treefile, 'r').read().strip().split('\n')]
 
         print 'Constructing data attribute dictionary'
 
@@ -107,12 +107,15 @@ class DataHandler():
             self.val_size = int(val_size * len(data_dict))
         self.test_size = int(self.test_size)
         self.val_size = int(self.val_size)
-        # select the image set for testing
-        shuf_ims = data_dict.keys()
-        np.random.shuffle(shuf_ims)
-        self.test_ims = shuf_ims[:self.test_size]
-        self.val_ims = shuf_ims[self.test_size:(self.test_size + self.val_size)]
-        self.train_ims = shuf_ims[(self.test_size + self.val_size):]
+        if resume:
+            self.loadSets(folder)
+        else:
+            # select the image set for testing
+            shuf_ims = data_dict.keys()
+            np.random.shuffle(shuf_ims)
+            self.test_ims = shuf_ims[:self.test_size]
+            self.val_ims = shuf_ims[self.test_size:(self.test_size + self.val_size)]
+            self.train_ims = shuf_ims[(self.test_size + self.val_size):]
         self.data_dict = data_dict
 
         self.cur_epoch = 0
@@ -121,6 +124,8 @@ class DataHandler():
 
         self.megabatch_queue = []
         self.minibatch_queue = []
+        self.minibatch_idents = []
+        self.minibatch_seq = []
         self.testing = False
         self.test_megabatch_queue = []
         self.test_minibatch_queue = []
@@ -132,6 +137,12 @@ class DataHandler():
             f.write(str(self.val_ims))
         with open(os.path.join(folder, 'test'),'w') as f:
             f.write(str(self.test_ims))
+        with open(os.path.join(folder, 'minibatches'),'w') as f:
+            f.write(str(self.minibatch_seq))
+    def loadSets(self, folder):
+        self.train_ims = eval(open(os.path.join(folder, 'train')).read())
+        self.val_ims = eval(open(os.path.join(folder, 'val')).read())
+        self.test_ims = eval(open(os.path.join(folder, 'test')).read())
     def nextBatch(self, test=False):
         # yields the next batch
         if test and not self.testing:
@@ -159,6 +170,8 @@ class DataHandler():
             self.megabatchAdvance()
         if not self.testing:
             self.cur_iteration += 1
+        if not self.testing:
+            self.minibatch_seq.append(self.minibatch_idents.pop(0))
         return minibatch_queue.pop(0)
     def testEpoch(self):
         print 'Beginning test epoch'
@@ -194,7 +207,7 @@ class DataHandler():
                 img_dat[i] = vgg19[imidx,:]
             tree_dat[i] = []
             for curtreeIDX in self.data_dict[i]['desc_idx']:
-                tree_dat[i].append(Tree(self.trees[curtreeIDX]))
+                tree_dat[i].append([self.trees[curtreeIDX][0], Tree(self.trees[curtreeIDX][1])])
             # shuffle the trees
             np.random.shuffle(tree_dat[i])
         print 'Constructing schedule for this megabatch'
@@ -205,7 +218,10 @@ class DataHandler():
                 if tree_rem[k] == 0:
                     tree_rem.pop(k, None)
             sample = [[img_dat[x], tree_dat[x].pop(0)] for x in sample]
+            sids = [x[1][0] for x in sample]
+            sample = [[x[0],x[1][1]] for x in sample]
             self.minibatch_queue.append(sample)
+            self.minibatch_idents.append(sids)
         if self.batchPerEpoch == None:
             self.batchPerEpoch = len(self.minibatch_queue) * (len(self.megabatch_queue) + 1)
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)

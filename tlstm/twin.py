@@ -219,6 +219,7 @@ class Twin:
 				print 'Cost function grad check passed!'
 		cost, image_deltas, sentence_deltas = \
 		self.newCostFunction(imageActs, sentActs)
+
 		if test:
 			return cost, np.array(sentActs), np.array(imageActs)
 

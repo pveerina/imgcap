@@ -14,6 +14,8 @@ from tlstm.twin import Twin
 from tlstm import sgd as optimizer
 import os
 
+np.seterr(all='raise')
+
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
 assert type(opts.data_type) == str
