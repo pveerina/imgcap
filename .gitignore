@@ -102,4 +102,4 @@ utils/treegen/parse*
 *.log
 models/*
 conf*
-
+logs/m_*
