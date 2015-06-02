@@ -18,7 +18,7 @@ from copy import deepcopy
 
 
 test_mode = True
-net_to_test = 'both'
+net_to_test = '2'
 
 if test_mode:
     opts.wvecDim = 5
@@ -156,9 +156,9 @@ else:
                     print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
                 sys.stdout.flush()
                 W[i,j] += epsilon / 2
-                costP, _, _ = net1.costAndGrad(b, test=True)
+                costP, _, _, _ = net1.costAndGrad(b, test=True)
                 W[i,j] -= epsilon
-                costN, _, _ = net1.costAndGrad(b, test=True)
+                costN, _, _, _ = net1.costAndGrad(b, test=True)
                 this_grad[i,j] = (costP - costN) / epsilon
                 W[i,j] += epsilon / 2
         comp_grads.append(this_grad)
