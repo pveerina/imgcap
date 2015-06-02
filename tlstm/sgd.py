@@ -115,12 +115,12 @@ class SGD:
                 if self.dh.cur_megabatch != prev_megabatch:
                     # checkpoint
                     prev_megabatch = self.dh.cur_megabatch
-                    self.save_checkpoint("%d"%prev_megabatch)
+                    self.save_checkpoint("%d_epoch%i"%(prev_megabatch, self.dh.cur_epoch))
         except KeyboardInterrupt as ke:
             if self.save_on_interrupt:
                 self.save_checkpoint('_INTERRUPT')
         except FloatingPointError as fe:
-            self.save_checkpoint('_FLOATING_POINT_ERROR')
+            self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
             self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
 
 
