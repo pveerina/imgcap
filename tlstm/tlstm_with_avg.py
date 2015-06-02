@@ -11,12 +11,12 @@ np.seterr(under='warn')
 
 # tip: insert pdb.set_trace() in places where you are unsure whats going on
 def sigmoid(x):
-        return 1/(1+np.exp(-x))
+    return 1/(1+np.exp(-x))
 
 def make_onehot(index, length):
-        y = np.zeros(length)
-        y[index] = 1
-        return y
+    y = np.zeros(length)
+    y[index] = 1
+    return y
 
 class TLSTM:
 
@@ -465,7 +465,7 @@ class TLSTM:
 		    if idx2 == self.paramDim-1:
                 	sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2/node.numRight)
 		    else:
-                	sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2)
+                        sr[idx1] += np.dot(self.Vr[idx1][idx2], k.hActs2)
             for j in range(self.paramDim):
                 self.r[j] = sigmoid(sr[j])
 
