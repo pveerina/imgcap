@@ -10,7 +10,7 @@ def printTime(seconds):
 
 class SGD:
 
-    def __init__(self, model, modelfilename, alpha=1e-2, dh=None, optimizer='sgd', logfile=None, test_inc=1000, save_on_interrupt=False):
+    def __init__(self, model, modelfilename, alpha=1e-2, dh=None, optimizer='sgd', logfile=None, test_inc=1000, save_on_interrupt=True):
         # dh = instance of data handler
         self.model1 = model
         self.model2 = model.topLayer
@@ -60,6 +60,11 @@ class SGD:
                         self.dev_costs.append(devco)
                         self.dev_scores.append(devsco)
                 all_iter += 1
+                if all_iter == 1:
+                    print 'Learning rate is %g'%(self.alpha)
+                if all_iter > 5 and not all_iter%10000:
+                    self.alpha *= .95
+                    print 'Updating learning rate to %g'%(self.alpha)
                 self.it = self.dh.cur_iteration
                 cost, _ = self.model1.costAndGrad(mbdata)
                 grad1 = self.model1.grads
@@ -77,7 +82,7 @@ class SGD:
                 if self.optimizer == 'sgd':
                     update1 = grad1
                     update2 = grad2
-                    scale = -self.alpha * (self.lr_decay**self.dh.cur_epoch)
+                    scale = -self.alpha
 
                 elif self.optimizer == 'adagrad':
 
