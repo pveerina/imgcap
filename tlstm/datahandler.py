@@ -227,8 +227,28 @@ class DataHandler():
         if self.batchPerEpoch == None:
             self.batchPerEpoch = len(self.minibatch_queue) * (len(self.megabatch_queue) + 1)
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)
-        import pdb
-        pdb.set_trace()
+    def constructBatch(self, batch):
+        minibatch = []
+        if type(batch) == str:
+            batch = eval(batch)
+            for i in batch:
+                imx = i.split('#')[0]
+                dcx = int(i.split('#')[1])
+                vgg16 = self.img_feats['vgg16'][self.data_dict[imx]['vgg16']]
+                vgg19 = self.img_feats['vgg19'][self.data_dict[imx]['vgg19']]
+                imidx = self.data_dict[imx]['img_feat_idx']
+                if self.data_type == 'both':
+                    img_dat = np.hstack((vgg16[imidx,:], vgg19[imidx,:]))
+                elif self.data_type == 'vgg16':
+                    img_dat = vgg16[imidx,:]
+                elif self.data_type == 'vgg19':
+                    img_dat = vgg19[imidx,:]
+                # get tree data
+                desc_idx = self.data_dict[imx]['desc_idx'][dcx]
+                tree_dat = Tree(self.trees[desc_idx][1])
+                minibatch.append([img_dat, tree_dat])
+        return minibatch
+
     def testMegabatch(self):
         print 'Loading test megabatch data'
         img_dat = dict()

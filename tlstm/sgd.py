@@ -62,6 +62,11 @@ class SGD:
                 cost, _ = self.model1.costAndGrad(mbdata)
                 grad1 = self.model1.grads
                 grad2 = self.model2.grads
+                if self.it > 1:
+                    if cost > 6*self.expcost[-1]:
+                        print 'Unusual cost observed, creating checkpoint...'
+                        self.save_checkpoint('_UNUSUALCOST_iter_%i'%all_iter)
+                        self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
                 if np.isfinite(cost):
                     if self.it > 1:
                         self.expcost.append(.01*cost + .99*self.expcost[-1])
@@ -103,10 +108,11 @@ class SGD:
                 self.costt.append(cost)
                 # compute time remaining
                 cur = time.time()
-                timePerIter = (cur-start) * 1./all_iter
+                tdiff = (cur-start)
+                timePerIter = tdiff * 1./all_iter
                 timeRem = timePerIter * (self.dh.batchPerEpoch - self.it)
                 if self.it%1 == 0:
-                    msg = "Iter:%6d (rem:%6d, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,len(self.dh.minibatch_queue), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
+                    msg = "Iter:%6d [%6i] (rem:%6d, %s so far, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f."%(self.it,all_iter,len(self.dh.minibatch_queue), printTime(tdiff), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
                     print msg
                     if self.logfile is not None:
                         with open(self.logfile, "a") as logfile:
@@ -119,6 +125,7 @@ class SGD:
         except KeyboardInterrupt as ke:
             if self.save_on_interrupt:
                 self.save_checkpoint('_INTERRUPT')
+                self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
         except FloatingPointError as fe:
             self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
             self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
@@ -131,3 +138,6 @@ class SGD:
             f.write(str(self.dev_scores))
         with open(self.model_filename%'dev_costs','w') as f:
             f.write(str(self.dev_costs))
+        with open(self.model_filename%'train_costs','w') as f:
+            f.write(str(self.expcost))
+        self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
