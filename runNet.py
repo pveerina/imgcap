@@ -16,6 +16,8 @@ import os
 
 np.seterr(all='raise')
 
+random_state = np.random.get_state()
+
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
 assert type(opts.data_type) == str
@@ -65,6 +67,8 @@ except Exception, e:
 model_filename = os.path.join(pfxm, 'megabatch_%s')
 log_filename = os.path.join(pfxL, 'megabatch_%s')
 shutil.copyfile("conf.py", os.path.join(pfxm, 'config'))
+with open(os.path.join(pfxm, 'random_state'), 'w') as f:
+    f.write(str(random_state))
 
 sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename, test_inc=opts.test_inc)
 

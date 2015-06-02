@@ -139,6 +139,8 @@ class DataHandler():
             f.write(str(self.test_ims))
         with open(os.path.join(folder, 'minibatches'),'w') as f:
             f.write(str(self.minibatch_seq))
+        with open(os.path.join(folder, 'future_minibatches'),'w') as f:
+            f.write(str(self.minibatch_idents))
     def loadSets(self, folder):
         self.train_ims = eval(open(os.path.join(folder, 'train')).read())
         self.val_ims = eval(open(os.path.join(folder, 'val')).read())
@@ -225,6 +227,8 @@ class DataHandler():
         if self.batchPerEpoch == None:
             self.batchPerEpoch = len(self.minibatch_queue) * (len(self.megabatch_queue) + 1)
         print 'Beginning megabatch %i (epoch %i)'%(self.cur_megabatch, self.cur_epoch)
+        import pdb
+        pdb.set_trace()
     def testMegabatch(self):
         print 'Loading test megabatch data'
         img_dat = dict()
