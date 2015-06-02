@@ -28,11 +28,12 @@ if test_mode:
     #opts.reg = 0
     #opts.rho = 0
     mult_factor = 1#50
+    opts.numLayers = 1
 
 # the relative error for gradients
 def rel_error(x, y):
   """ returns relative error """
-  return np.max(np.abs(x - y) / (np.maximum(1, np.abs(x) + np.abs(y))))
+  return np.max(np.abs(x - y) / (np.maximum(1e-6, np.abs(x) + np.abs(y))))
 
 # ensure the options are valid
 assert opts.megabatch_size % opts.minibatch_size == 0
@@ -113,9 +114,9 @@ if net_to_test != '2':
                 print('\tprog: %6i / %6i'%(cnt,len(dL)*L.shape[1]), end="\r")
             sys.stdout.flush()
             L[i,j] += epsilon / 2
-            costP, _ = net1.costAndGrad(b, test=True)
+            costP, _, _, _ = net1.costAndGrad(b, test=True)
             L[i,j] -= epsilon / 2
-            costN, _ = net1.costAndGrad(b, test=True)
+            costN, _, _, _ = net1.costAndGrad(b, test=True)
             this_grad[i][j] = (costP - costN) / epsilon
             L[i,j] += epsilon / 2
     comp_grads.append(this_grad)
@@ -134,9 +135,9 @@ if net_to_test != '2':
                     print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
                 sys.stdout.flush()
                 W[i,j] += epsilon / 2
-                costP, _ = net1.costAndGrad(b, test=True)
+                costP, _, _, _ = net1.costAndGrad(b, test=True)
                 W[i,j] -= epsilon
-                costN, _ = net1.costAndGrad(b, test=True)
+                costN, _, _, _ = net1.costAndGrad(b, test=True)
                 this_grad[i,j] = (costP - costN) / epsilon
                 W[i,j] += epsilon / 2
         comp_grads.append(this_grad)
@@ -155,9 +156,9 @@ else:
                     print('\tprog: %6i / %6i'%(cnt,W.size), end="\r")
                 sys.stdout.flush()
                 W[i,j] += epsilon / 2
-                costP, _ = net1.costAndGrad(b, test=True)
+                costP, _, _ = net1.costAndGrad(b, test=True)
                 W[i,j] -= epsilon
-                costN, _ = net1.costAndGrad(b, test=True)
+                costN, _, _ = net1.costAndGrad(b, test=True)
                 this_grad[i,j] = (costP - costN) / epsilon
                 W[i,j] += epsilon / 2
         comp_grads.append(this_grad)

@@ -17,8 +17,6 @@ class Node: # a node in the tree
         self.u = None
         self.l = None
         self.r = None
-	self.numLeft = None
-	self.numRight = None
 
 class Tree:
     def __init__(self, tree, img=None, num=None):

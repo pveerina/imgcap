@@ -148,6 +148,10 @@ class Twin:
 		# tests the cost function deltas, to make sure they are
 		# correct.
 		#c, xd, yd = self.costFunction(xs, ys)
+		import pdb
+		pdb.set_trace()
+		xs = xs.astype(float)
+		ys = ys.astype(float)
 		c, xd, yd = self.newCostFunction(xs, ys)
 		cyd = []
 		cxd = []
@@ -183,7 +187,8 @@ class Twin:
 		        ccxs.append((cP-cN)/epsilon)
 		    cyd.append(np.array(ccxs))
 		cyd = np.array(cyd)
-
+		import pdb
+		pdb.set_trace()
 		re1 = rel_error(xd, cxd)
 		re2 = rel_error(yd, cyd)
 		print 'Rel Error [x]: %g'%re1
