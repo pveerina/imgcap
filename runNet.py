@@ -14,10 +14,7 @@ from tlstm import sgd as optimizer
 from glob import glob
 import os
 
-if opts.childSum:
-    from tlstm.tlstm import TLSTM_childSum as TLSTM
-else:
-    from tlstm.tlstm import TLSTM
+from tlstm.tlstm import TLSTM
 
 np.seterr(all='raise')
 
