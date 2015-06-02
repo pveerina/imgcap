@@ -145,6 +145,13 @@ class DataHandler():
         self.train_ims = eval(open(os.path.join(folder, 'train')).read())
         self.val_ims = eval(open(os.path.join(folder, 'val')).read())
         self.test_ims = eval(open(os.path.join(folder, 'test')).read())
+        self.minibatch_seq = eval(open(os.path.join(folder, 'minibatches')).read())
+        print 'Pruning seen minibatches -- this may take a while'
+        for n in self.minibatch_seq:
+            m = self.nextBatch()
+            if m != n:
+                print 'Problem with minibatches -- they dont correspond!'
+        print 'Done, model has been restored to most recent snapshot'
     def nextBatch(self, test=False):
         # yields the next batch
         if test and not self.testing:

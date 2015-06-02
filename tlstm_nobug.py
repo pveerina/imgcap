@@ -197,21 +197,68 @@ class TLSTM:
         a tree.
         """
         cost = 0.0
+        correct = []
+        guess = []
         total = 0.0
+        self.L = self.stack[0]
+
+        self.Wo = self.stack[1]
+        self.Uo = self.stack[2:2+self.paramDim]
+        self.Vo = self.stack[2+self.paramDim:2+2*self.paramDim]
+        self.bo = self.stack[2+2*self.paramDim]
+
+        self.Wi = self.stack[3+2*self.paramDim]
+        self.Ui = self.stack[4+2*self.paramDim:4+3*self.paramDim]
+        self.Vi = self.stack[4+3*self.paramDim:4+4*self.paramDim]
+        self.bi = self.stack[4+4*self.paramDim]
+
+        self.Wu = self.stack[5+4*self.paramDim]
+        self.Uu = self.stack[6+4*self.paramDim:6+5*self.paramDim]
+        self.Vu = self.stack[6+5*self.paramDim:6+6*self.paramDim]
+        self.bu = self.stack[6+6*self.paramDim]
+
+        self.Wf = self.stack[7+6*self.paramDim]
+        self.Ul = [self.stack[8+(6+j)*self.paramDim:8+(7+j)*self.paramDim] for j in range(self.paramDim)]
+        self.Vl = [self.stack[8+(7+self.paramDim-1+j)*self.paramDim:8+(7+self.paramDim+j)*self.paramDim] for j in range(self.paramDim)]
+        self.Ur = [self.stack[8+(7+2*self.paramDim-1+j)*self.paramDim:8+(7+2*self.paramDim+j)*self.paramDim] for j in range(self.paramDim)]
+        self.Vr = [self.stack[8+(7+3*self.paramDim-1+j)*self.paramDim:8+(7+3*self.paramDim+j)*self.paramDim] for j in range(self.paramDim)]
+        self.bf = self.stack[8+(7+4*self.paramDim-1)*self.paramDim]
 
         assert len(self.stack) == 9+(6+4*self.paramDim)*self.paramDim
 
         # Zero gradients
-        # Zero gradients
-        for cgrad in self.grads[1:]:
-            cgrad[:] = 0
+        self.dbi[:] = 0
+        self.dbo[:] = 0
+        self.dbu[:] = 0
+        self.dbf[:] = 0
+
+        self.dWu[:] = 0
+        self.dWi[:] = 0
+        self.dWo[:] = 0
+        self.dWf[:] = 0
+
+        for j in range(self.paramDim):
+            for k in range(self.paramDim):
+                self.dUl[j][k][:] = 0
+                self.dUr[j][k][:] = 0
+            self.dUi[j][:] = 0
+            self.dUo[j][:] = 0
+            self.dUu[j][:] = 0
+
+        for j in range(self.paramDim):
+            for k in range(self.paramDim):
+                self.dVl[j][k][:] = 0
+                self.dVr[j][k][:] = 0
+            self.dVi[j][:] = 0
+            self.dVo[j][:] = 0
+            self.dVu[j][:] = 0
 
         self.dL = collections.defaultdict(self.defaultVec)
         self.grads[0] = self.dL
         # Forward prop each tree in minibatch
         newmbdata = []
         for imgvec, tree in mbdata:
-            tot = self.forwardProp(tree.root)
+            tot = self.forwardProp(tree.root,correct,guess)
             total += tot
             newmbdata.append((imgvec, tree.root.hActs2))
 
@@ -313,7 +360,7 @@ class TLSTM:
 
         return cost, total
 
-    def forwardProp(self,node):
+    def forwardProp(self,node, correct=[], guess=[]):
         cost  =  total = 0.0
         node.numLeft = max(len(node.left)-self.paramDim+1, 1) # Number of left children sharing parameters
         node.numRight = max(len(node.right)-self.paramDim+1, 1) # Number of right children sharing parameters
@@ -326,9 +373,9 @@ class TLSTM:
             node.hActs1 = np.multiply(self.i, self.u)
         else:
             for j in node.left:
-                total += self.forwardProp(j)
+                total += self.forwardProp(j, correct, guess)
             for j in node.right:
-                total += self.forwardProp(j)
+                total += self.forwardProp(j, correct, guess)
             si = np.dot(self.Wi, x)+np.reshape(self.bi, (self.middleDim, 1))
             for j in node.left:
                 idx = min(j.idx, self.paramDim-1)
@@ -930,7 +977,7 @@ class TLSTM_childSum:
         # Forward prop each tree in minibatch
         newmbdata = []
         for imgvec, tree in mbdata:
-            tot = self.forwardProp(tree.root)
+            tot = self.forwardProp(tree.root,correct,guess)
             total += tot
             newmbdata.append((imgvec, tree.root.hActs2))
 

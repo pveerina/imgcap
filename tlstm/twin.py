@@ -111,6 +111,7 @@ class Twin:
 					c_yd += (ix - cx)*(s2[i][j]>0) - cx*(s1[i][j]>0) + ix * (s1[j][i]>0)
 			xd.append(c_xd)
 			yd.append(c_yd)
+		print 'xd norm: %.4f, yd norm: %.4f'%(np.linalg.norm(xd), np.linalg.norm(yd))
 		return cost, xd, yd
 
 	def newCostFunction(self, xs, ys, test=False):
@@ -142,6 +143,7 @@ class Twin:
 	    ty3 = (s1t.T)[:,:,None]*xs
 	    xd = np.sum(tx1 - tx2 + tx3, 1)
 	    yd = np.sum(ty1 - ty2 + ty3, 1)
+	    print 'xd norm: %.4f, yd norm: %.4f'%(np.linalg.norm(xd), np.linalg.norm(yd))
 	    return cost, list(xd), list(yd)
 
 	def testCost(self, xs, ys):
