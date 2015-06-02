@@ -268,7 +268,7 @@ class DataHandler():
                 img_dat[i] = vgg19[imidx,:]
             tree_dat[i] = []
             for curtreeIDX in self.data_dict[i]['desc_idx']:
-                tree_dat[i].append(Tree(self.trees[curtreeIDX]))
+                tree_dat[i].append(Tree(self.trees[curtreeIDX][1]))
             # shuffle the trees
             np.random.shuffle(tree_dat[i])
         print 'Constructing schedule for this testing megabatch'
