@@ -64,7 +64,7 @@ class SGD:
                 cost, _ = self.model1.costAndGrad(mbdata)
                 grad1 = self.model1.grads
                 grad2 = self.model2.grads
-                if self.all_iter > 1:
+                if all_iter > 1:
                     if cost > 10*self.expcost[-1]:
                         print 'Unusual cost observed, creating checkpoint...'
                         self.save_checkpoint('_UNUSUALCOST_iter_%i'%all_iter)

@@ -103,7 +103,8 @@ else:
 sgd = optimizer.SGD(net1, model_filename, opts.alpha, dh, optimizer=opts.optimizer, logfile=log_filename, test_inc=opts.test_inc)
 
 #sgd = optimizer.SGD(net1, 1e-5, dh, optimizer='sgd')
-if most_recent:
-    dh.loadSets(most_recent)
+if opts.resume_most_recent:
+    if most_recent:
+        dh.loadSets(most_recent)
 sgd.run()
 sgd.save_checkpoint("final")
