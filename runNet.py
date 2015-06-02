@@ -58,14 +58,9 @@ try:
     os.mkdir(pfxm)
 except Exception, e:
     pass
-pfxL = "logs/m_%s"%datetime.now().strftime("%m%d_%H%M%S")
-try:
-    os.mkdir(pfxL)
-except Exception, e:
-    pass
+log_filename = "logs/m_%s"%datetime.now().strftime("%m%d_%H%M%S")
 
 model_filename = os.path.join(pfxm, 'megabatch_%s')
-log_filename = os.path.join(pfxL, 'megabatch_%s')
 shutil.copyfile("conf.py", os.path.join(pfxm, 'config'))
 with open(os.path.join(pfxm, 'random_state'), 'w') as f:
     f.write(str(random_state))
