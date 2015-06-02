@@ -10,7 +10,7 @@ def printTime(seconds):
 
 class SGD:
 
-    def __init__(self, model, modelfilename, alpha=1e-2,dh=None, optimizer='sgd', logfile=None, test_inc=1000, save_on_interrupt=False):
+    def __init__(self, model, modelfilename, alpha=1e-2, dh=None, optimizer='sgd', logfile=None, test_inc=1000, save_on_interrupt=True):
         # dh = instance of data handler
         self.model1 = model
         self.model2 = model.topLayer
@@ -23,6 +23,7 @@ class SGD:
         assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
         self.alpha = alpha # learning rate
+        self.lr_decay = 0.9
         self.optimizer = optimizer
         self.test_inc = test_inc
         self.save_on_interrupt = save_on_interrupt
@@ -76,7 +77,7 @@ class SGD:
                 if self.optimizer == 'sgd':
                     update1 = grad1
                     update2 = grad2
-                    scale = -self.alpha
+                    scale = -self.alpha * (self.lr_decay**self.dh.cur_epoch)
 
                 elif self.optimizer == 'adagrad':
 
