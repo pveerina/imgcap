@@ -53,10 +53,11 @@ class SGD:
             self.dev_costs = []
             self.dev_scores = []
             while mbdata != None:
-                if not all_iter % self.test_inc:
-                    devco, devsco = test(self.model1, self.dh)
-                    self.dev_costs.append(devco)
-                    self.dev_scores.append(devsco)
+                if not self.test_inc == None:
+                    if not all_iter % self.test_inc:
+                        devco, devsco = test(self.model1, self.dh)
+                        self.dev_costs.append(devco)
+                        self.dev_scores.append(devsco)
                 all_iter += 1
                 self.it = self.dh.cur_iteration
                 cost, _ = self.model1.costAndGrad(mbdata)
