@@ -130,7 +130,8 @@ class SGD:
                 self.save_checkpoint('_INTERRUPT')
                 self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
         except FloatingPointError as fe:
-            print 'FLOATING POINT ERROR'
+            print 'FLOATING POINT ERROR!'
+            print fe.message
             self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
             self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
 
