@@ -554,15 +554,14 @@ class TLSTM:
         if log:
             for P,dP in zip(self.stack[1:],update[1:]):
                 pRMS = np.sqrt(np.mean(P**2))
-                dpRMS = np.sqrt(np.mean((scale*dP)**2))
+                dpRMS = np.sqrt(np.mean((scale * dP)**2))
                 print "weight rms=%f -- update rms=%f"%(pRMS,dpRMS)
-
-        self.stack[1:] = [P+scale*dP for P,dP in zip(self.stack[1:],update[1:])]
-
+        for n in range(1,len(self.stack)):
+            self.stack[n] += scale * update[n]
         # handle dictionary update sparsely
         dL = update[0]
         for j in dL.iterkeys():
-            self.L[j,:] += scale*dL[j]
+            self.L[j,:] += scale * dL[j]
 
     def toFile(self):
         return self.stack

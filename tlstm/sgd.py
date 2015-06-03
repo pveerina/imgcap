@@ -23,7 +23,9 @@ class SGD:
         assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
         self.alpha = alpha # learning rate
-        self.lr_decay = 0.9
+        self.lr_decay = 0.95
+        self.mu = .5
+        self.mu_coeff = 1.1
         self.optimizer = optimizer
         self.test_inc = test_inc
         self.save_on_interrupt = save_on_interrupt
@@ -53,61 +55,104 @@ class SGD:
             all_iter = 0
             self.dev_costs = []
             self.dev_scores = []
+            use_momentum = True
+            vel1 = None
+            vel2 = None
             while mbdata != None:
-                if not self.test_inc == None:
-                    if not all_iter % self.test_inc:
-                        devco, devsco = test(self.model1, self.dh)
-                        self.dev_costs.append(devco)
-                        self.dev_scores.append(devsco)
-                all_iter += 1
-                if all_iter == 1:
-                    print 'Learning rate is %g'%(self.alpha)
-                if all_iter > 5 and not all_iter%10000:
-                    self.alpha *= .95
-                    print 'Updating learning rate to %g'%(self.alpha)
-                self.it = self.dh.cur_iteration
-                cost, _ = self.model1.costAndGrad(mbdata)
-                grad1 = self.model1.grads
-                grad2 = self.model2.grads
-                if all_iter > 1:
-                    if cost > 10*self.expcost[-1]:
-                        print 'Unusual cost observed, creating checkpoint...'
-                        self.save_checkpoint('_UNUSUALCOST_iter_%i'%all_iter)
-                        self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
-                if np.isfinite(cost):
-                    if self.it > 1:
-                        self.expcost.append(.01*cost + .99*self.expcost[-1])
-                    else:
-                        self.expcost.append(cost)
-                if self.optimizer == 'sgd':
-                    update1 = grad1
-                    update2 = grad2
-                    scale = -self.alpha
+                try:
+                    if not self.test_inc == None:
+                        if not all_iter % self.test_inc:
+                            devco, devsco = test(self.model1, self.dh)
+                            self.dev_costs.append(devco)
+                            self.dev_scores.append(devsco)
+                    all_iter += 1
+                    if all_iter == 1:
+                        print 'Learning rate is %g'%(self.alpha)
+                    if all_iter > 5 and not all_iter%10000:
+                        self.alpha *= self.lr_decay
+                        self.mu *= self.mu_coeff
+                        print 'Updating learning rate to %g'%(self.alpha)
+                        print 'Updating momentum to %g'%(self.mu)
+                    self.it = self.dh.cur_iteration
+                    cost, _ = self.model1.costAndGrad(mbdata)
+                    grad1 = self.model1.grads
+                    grad2 = self.model2.grads
+                    if all_iter > 1:
+                        if cost > 10*self.expcost[-1]:
+                            print 'Unusual cost observed, creating checkpoint...'
+                            self.save_checkpoint('_UNUSUALCOST_iter_%i'%all_iter)
+                            self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
+                    if np.isfinite(cost):
+                        if self.it > 1:
+                            self.expcost.append(.01*cost + .99*self.expcost[-1])
+                        else:
+                            self.expcost.append(cost)
+                    if self.optimizer == 'sgd':
+                        if use_momentum:
+                            scale = -self.alpha/(1+self.mu)
+                            if vel1 == None:
+                                vel1 = [0] + [x * scale for x in grad1[1:]]
+                                vel2 = [x * scale for x in grad2]
+                            vel1[0] = grad1[0]
+                            for j in vel1[0].iterkeys():
+                                vel1[0][j] *= scale
+                            for n,x in enumerate(grad1):
+                                if n == 0:
+                                    continue
+                                vel1[n] *= self.mu
+                                vel1[n] += scale * x
+                            for n,x in enumerate(grad2):
+                                vel2[n] *= self.mu
+                                vel2[n] += scale * x
+                            update1 = vel1
+                            update2 = vel2
+                            self.model1.updateParams(1.,update1,log=False)
+                            self.model2.updateParams(1.,update2)
+                        else:
+                            scale = -self.alpha
+                            update1 = grad1
+                            update2 = grad2
+                            self.model1.updateParams(scale,update1,log=False)
+                            self.model2.updateParams(scale,update2)
 
-                elif self.optimizer == 'adagrad':
+                    elif self.optimizer == 'adagrad':
 
-                    self.gradt1[1:] = [gt+g**2
-                            for gt,g in zip(self.gradt1[1:],grad1[1:])]
-                    update =  [g*(1./np.sqrt(gt))
-                            for gt,g in zip(self.gradt1[1:],grad1[1:])]
-                    # handle dictionary separately
-                    dL = grad1[0]
-                    dLt = self.gradt1[0]
-                    for j in dL.iterkeys():
-                        dLt[j] = dLt[j,:] + dL[j]**2
-                        dL[j] = dL[j] * (1./np.sqrt(dLt[j,:]))
-                    update1 = [dL] + update
-                    #
-                    # Now perform it for network 2
-                    #
-                    self.gradt2 = [gt+g**2
-                            for gt,g in zip(self.gradt2,grad2)]
-                    update2 =  [g*(1./np.sqrt(gt))
-                            for gt,g in zip(self.gradt2,grad2)]
-                    # handle dictionary separately
+                        self.gradt1[1:] = [gt+g**2
+                                for gt,g in zip(self.gradt1[1:],grad1[1:])]
+                        update =  [g*(1./np.sqrt(gt))
+                                for gt,g in zip(self.gradt1[1:],grad1[1:])]
+                        # handle dictionary separately
+                        dL = grad1[0]
+                        dLt = self.gradt1[0]
+                        for j in dL.iterkeys():
+                            dLt[j] = dLt[j,:] + dL[j]**2
+                            dL[j] = dL[j] * (1./np.sqrt(dLt[j,:]))
+                        update1 = [dL] + update
+                        #
+                        # Now perform it for network 2
+                        #
+                        self.gradt2 = [gt+g**2
+                                for gt,g in zip(self.gradt2,grad2)]
+                        update2 =  [g*(1./np.sqrt(gt))
+                                for gt,g in zip(self.gradt2,grad2)]
+                        # handle dictionary separately
 
-                    scale = -self.alpha
-
+                        scale = -self.alpha
+                except FloatingPointError as fe:
+                    print 'FLOATING POINT ERROR!'
+                    print fe.message
+                    print 'Saving checkpoint...'
+                    self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
+                    self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
+                    msg = "Iter:%6d [%6i] (rem:%6d, %s so far, %s to next epoch) mbatch:%d epoch:%d cost=%7.4f, exp=%7.4f. FLOATING POINT ERROR HERE"%(self.it,all_iter,len(self.dh.minibatch_queue), printTime(tdiff), printTime(timeRem), self.dh.cur_megabatch, self.dh.cur_epoch, cost,self.expcost[-1])
+                    if self.logfile is not None:
+                        with open(self.logfile, "a") as logfile:
+                            logfile.write(msg + "\n")
+                    print 'Discarding minibatch and parameter updates'
+                    if use_momentum:
+                        vel1 = None
+                        vel2 = None
+                    continue
                 # update params
                 self.model1.updateParams(scale,update1,log=False)
                 self.model2.updateParams(scale,update2)
@@ -134,11 +179,6 @@ class SGD:
             if self.save_on_interrupt:
                 self.save_checkpoint('_INTERRUPT')
                 self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
-        except FloatingPointError as fe:
-            print 'FLOATING POINT ERROR!'
-            print fe.message
-            self.save_checkpoint('_FLOATING_POINT_ERROR_iter%i'%all_iter)
-            self.dh.saveSets('/'.join(self.model_filename.split('/')[:-1]))
 
 
     def save_checkpoint(self, checkpoint_name):
