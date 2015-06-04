@@ -2,7 +2,7 @@ import numpy as np
 from collections import Counter
 
 class Twin:
-	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, scale, reg=1e-4, params=None):
+	def __init__(self, sentenceDim, imageDim, sharedDim, numLayers, scale, reg=1e-4, leakiness=0, params=None):
 		self.sentenceDim = sentenceDim
 		self.imageDim = imageDim
 		self.reg = reg
@@ -10,6 +10,7 @@ class Twin:
 		self.numLayers = numLayers
 		self.scale = scale
 		self.initParams(params)
+		self.leakiness = leakiness
 
 	def initParams(self, params):
 
@@ -258,7 +259,8 @@ class Twin:
 	def forwardProp(self, h, Ws, bs):
 		activations = [h]
 		for i in range(len(Ws)):
-			h = np.maximum(Ws[i].dot(h).squeeze() + bs[i].squeeze(), 0)
+			h = Ws[i].dot(h).squeeze() + bs[i].squeeze()
+			h[h<=0] *= self.leakiness
 			activations.append(h)
 		return activations
 
@@ -271,7 +273,7 @@ class Twin:
 		delta = image_delta_top
 		h = image_activations
 		for layer in idx:
-			delta *= h[layer+1] > 0
+			delta *= self.leakiness ** (h[layer+1] <= 0)
 			self.img_grads[layer] += np.outer(delta, h[layer])
 			self.img_biasGrads[layer] += delta
 			delta = delta.dot(self.img_params[layer])
@@ -283,7 +285,7 @@ class Twin:
 		delta = sentence_delta_top
 		h = sentence_activations
 		for layer in idx:
-			delta *= h[layer+1] > 0
+			delta *= self.leakiness ** (h[layer+1] <= 0)
 			self.sent_grads[layer] += np.outer(delta, h[layer])
 			self.sent_biasGrads[layer] += delta
 			delta = delta.dot(self.sent_params[layer])

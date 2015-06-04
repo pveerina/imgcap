@@ -23,9 +23,10 @@ class SGD:
         assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
         self.alpha = alpha # learning rate
-        self.lr_decay = 0.925
+        self.lr_decay = 0.95
         self.mu = .5
         self.mu_coeff = .03
+        self.lr_step = 2500
         self.optimizer = optimizer
         self.test_inc = test_inc
         self.save_on_interrupt = save_on_interrupt
@@ -68,7 +69,7 @@ class SGD:
                     all_iter += 1
                     if all_iter == 1:
                         print 'Learning rate is %g'%(self.alpha)
-                    if all_iter > 5 and not all_iter%1000:
+                    if all_iter > 5 and not all_iter%self.lr_step:
                         self.alpha *= self.lr_decay
                         self.mu += ((1-self.mu)-.05)*self.mu_coeff
                         print 'Updating learning rate to %g'%(self.alpha)
