@@ -23,9 +23,9 @@ class SGD:
         assert self.model1 is not None, "Must define a function to optimize"
         self.it = 0
         self.alpha = alpha # learning rate
-        self.lr_decay = 0.95
+        self.lr_decay = 0.925
         self.mu = .5
-        self.mu_coeff = 1.1
+        self.mu_coeff = .03
         self.optimizer = optimizer
         self.test_inc = test_inc
         self.save_on_interrupt = save_on_interrupt
@@ -68,9 +68,9 @@ class SGD:
                     all_iter += 1
                     if all_iter == 1:
                         print 'Learning rate is %g'%(self.alpha)
-                    if all_iter > 5 and not all_iter%10000:
+                    if all_iter > 5 and not all_iter%1000:
                         self.alpha *= self.lr_decay
-                        self.mu *= self.mu_coeff
+                        self.mu += ((1-self.mu)-.05)*self.mu_coeff
                         print 'Updating learning rate to %g'%(self.alpha)
                         print 'Updating momentum to %g'%(self.mu)
                     self.it = self.dh.cur_iteration
@@ -106,14 +106,11 @@ class SGD:
                                 vel2[n] += scale * x
                             update1 = vel1
                             update2 = vel2
-                            self.model1.updateParams(1.,update1,log=False)
-                            self.model2.updateParams(1.,update2)
+                            scale = 1
                         else:
                             scale = -self.alpha
                             update1 = grad1
                             update2 = grad2
-                            self.model1.updateParams(scale,update1,log=False)
-                            self.model2.updateParams(scale,update2)
 
                     elif self.optimizer == 'adagrad':
 
@@ -154,9 +151,10 @@ class SGD:
                         vel2 = None
                     continue
                 # update params
-                self.model1.updateParams(scale,update1,log=False)
+                #self.model1.updateParams(scale,update1,log=True)
+                #self.model2.updateParams(scale,update2,log=True)
+                self.model1.updateParams(scale,update1)
                 self.model2.updateParams(scale,update2)
-
                 self.costt.append(cost)
                 # compute time remaining
                 cur = time.time()

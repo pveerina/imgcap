@@ -16,7 +16,8 @@ import os
 
 from tlstm.tlstm import TLSTM
 
-np.seterr(all='raise')
+np.seterr(all='warn')
+np.seterr(over='raise')
 
 random_state = np.random.get_state()
 

@@ -294,7 +294,14 @@ class Twin:
 		return image_input_grad, sent_input_grad
 
 
-	def updateParams(self, scale, update):
+	def updateParams(self, scale, update, log=False):
+		for i in xrange(len(self.stack)):
+			if log == True:
+				dpRMS = np.sqrt(np.mean((scale * dP)**2))
+				P = self.stack[i]
+				dP = update[i]
+				pRMS = np.sqrt(np.mean(P**2))
+				print "%8s weight rms=%12.10f -- update rms=%12.10f"%(self.names[i],pRMS,dpRMS)
 		for i in xrange(len(self.stack)):
 			self.stack[i] += scale * update[i]
 

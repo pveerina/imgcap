@@ -552,10 +552,10 @@ class TLSTM:
         and update.
         """
         if log:
-            for P,dP in zip(self.stack[1:],update[1:]):
+            for P,dP,name in zip(self.stack[1:],update[1:],self.names):
                 pRMS = np.sqrt(np.mean(P**2))
                 dpRMS = np.sqrt(np.mean((scale * dP)**2))
-                print "weight rms=%f -- update rms=%f"%(pRMS,dpRMS)
+                print "%8s weight rms=%17.15f -- update rms=%17.15f"%(name,pRMS,dpRMS)
         for n in range(1,len(self.stack)):
             self.stack[n] += scale * update[n]
         # handle dictionary update sparsely
