@@ -287,9 +287,7 @@ class DataHandler():
         while len(tree_rem) >= self.minibatch_size:
             sample = np.random.choice(tree_rem.keys(), self.minibatch_size, replace=False)
             for k in sample:
-                tree_rem[k]-=1
-                if tree_rem[k] == 0:
-                    tree_rem.pop(k, None)
+                tree_rem.pop(k, None)
             sample = [[img_dat[x], tree_dat[x].pop(0)] for x in sample]
             self.test_minibatch_queue.append(sample)
         print 'Beginning testing megabatch'

@@ -11,22 +11,23 @@ def test(net, dh):
     b = dh.nextBatch(test=True)
     baseline = 1./len(b)
     costs = []
-    scores = []
+    xs = []
+    ys = []
     while b != -1:
-        cost, total, xs, ys = net.costAndGrad(b, test=True)
-        dp = np.dot(xs, ys.T)
-        res = np.argmax(dp)
-        score2 = np.sum(np.argmax(dp,1)==np.array(range(len(dp)))) * 1./len(dp)
+        cost, total, xst, yst = net.costAndGrad(b, test=True)
+        xs += list(xst)
+        ys += list(yst)
         if len(dh.test_minibatch_queue):
-            print('%5i rem cost:%6.3f score:%g'%(len(dh.test_minibatch_queue), cost, score2), end="\r")
+            print('%5i rem cost:%6.3f'%(len(dh.test_minibatch_queue), cost), end="\r")
             sys.stdout.flush()
         else:
-            print('%5i rem cost:%6.3f score:%g'%(len(dh.test_minibatch_queue), cost, score2))
+            print('%5i rem cost:%6.3f'%(len(dh.test_minibatch_queue), cost))
             sys.stdout.flush()
         costs.append(cost)
-        scores.append(score2)
         b = dh.nextBatch(test=True)
+    dp = np.argmax(np.dot(np.array(xs),np.array(ys).T),1)
+    score2 = np.sum(dp==np.array(range(len(dp)))) * 1./len(dp)
     mc = np.mean(costs)
-    ms = np.mean(scores)
-    print('Mean cost: %g, Mean score: %g [baseline: %g]'%(mc, ms, baseline))
+    ms = score2
+    print('Mean cost: %g, R@1: %g'%(mc, ms))
     return mc, ms
